@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <title>Students List</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <style>
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+        border: 1px solid var(--primary);
+      }
+
+      th,
+      td {
+        padding: 12px;
+        border-bottom: 1px solid #ddd;
+        text-align: left;
+        border: 1px solid var(--primary);
+      }
+
+      th {
+        background-color: rgb(17, 74, 17);
+        color: white;
+      }
+
+      a {
+        text-decoration: none;
+        font-weight: 400;
+      }
+      .stdLink {
+        color: rgb(233, 52, 52) !important;
+        text-decoration: none;
+        font-weight: 500;
+        font-weight: bold;
+      }
+
+      .stdLink:hover {
+        color: rgb(17, 74, 17) !important;
+      }
+
+      .container {
+        width: 90%;
+        max-width: 800px;
+        margin: 40px auto;
+      }
+
+      h2 {
+        text-align: center;
+        color: var(--primary);
+        margin-bottom: 20px;
+      }
+    </style>
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+
+  </head>
+
+  <body>
+    <div class="d-flex" id="wrapper">
+      <!-- Sidebar -->
+      <div class="bg-white border-end" id="sidebar-wrapper">
+        <div class="sidebar-heading text-center py-4 fs-1 fw-bold text-green">FCA AttendancePulse</div>
+        <div class="list-group list-group-flush">
+          <a href="/dashboard" class="list-group-item list-group-item-action bg-transparent">Dashboard</a>
+          <a href="/api/auth/students" class="list-group-item list-group-item-action bg-transparent">Students</a>
+          <a href="/lecturer" class="list-group-item list-group-item-action bg-transparent">Sessions</a>
+          <a href="/api/report/attendance" class="list-group-item list-group-item-action bg-transparent">Attendance</a>
+          <a href="/admin" class="list-group-item list-group-item-action bg-transparent">Admin</a>
+                    <button id="logoutBtn" class="btn btn-green">Logout</button>
+        </div>
+      </div>
+      <!-- Page Content -->
+      <div id="page-content-wrapper" style="margin-bottom: 100px;">
+        <nav class="navbar navbar-expand-lg border-bottom"
+          style="margin-top: -20px;margin-right: -20px;margin-left: -20px">
+          <div class="container-fluid">
+            <button class="btn" id="sidebarToggle"
+              style="background-color: rgb(17, 74, 17);color: white;width: 42px">☰</button>
+            <h4 style="color: green; font-weight: bold">FCA AttendancePulse</h4>
+            <span class="ms-auto">Logged in as: <strong id="navbarUser">Loading...</strong></span>
+          </div>
+        </nav>
+
+
+        <div class="container">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Reg No</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% students.forEach((s, index)=> { %>
+                <tr>
+                  <td>
+                    <%= index + 1 %>
+                  </td>
+                  <td>
+                    <%= s.name %>
+                  </td>
+                  <td>
+                    <%= s.email || '-' %>
+                  </td>
+                  <td>
+                    <a href="/api/auth/student/<%= s.id %>/qr" class="stdLink">
+                      <%= s.reg_no %>
+                    </a>
+                  </td>
+                </tr>
+                <% }) %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <script src="/js/jquery.min.js"></script>
+    <script src="/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/dashboard.js"></script>
+
+  </body>
+
+
+
+</html>

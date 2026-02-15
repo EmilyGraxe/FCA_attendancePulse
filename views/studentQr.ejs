@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <title>Student Registered</title>
+        <link rel="stylesheet" href="/css/styles.css">
+        <style>
+            body {
+                text-align: center;
+                font-family: sans-serif;
+                padding: 50px;
+            }
+
+            .qr-card {
+                display: inline-block;
+                padding: 20px;
+                border: 1px solid #ccc;
+            }
+
+
+            button {
+                padding: 10px 20px;
+                font-size: 16px;
+                cursor: pointer;
+            }
+
+            @media print {
+                body * {
+                    visibility: hidden;
+                }
+
+                .qr-card,
+                .qr-card * {
+                    visibility: visible;
+                }
+
+                .qr-card {
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    /* center card on page */
+                    width: 400px;
+                    /* optional, makes card slightly larger */
+                    text-align: center;
+                }
+
+                button,
+                a {
+                    display: none;
+                }
+            }
+
+
+            .btn-back {
+                display: inline-block;
+                padding: 10px 18px;
+                background-color: #1e7f4f;
+                color: white;
+                font-weight: 500;
+                border-radius: 50px;
+                /* makes it rounded */
+                text-decoration: none;
+                position: relative;
+                transition: all 0.3s ease;
+            }
+
+            .btn-back::before {
+                content: '←';
+                display: inline-block;
+                margin-right: 8px;
+                transition: transform 0.3s ease;
+                display: inline-block;
+                margin-right: 8px;
+                animation: slideArrow 1s linear infinite;
+            }
+
+            /* Hover effect: arrow moves slightly and button changes shade */
+            button:hover, .btn-back:hover {
+                background-color: #3cca81;
+                transform: scale(1.05);
+                /* grows slightly */
+            }
+
+            .btn-back:hover::before {
+                transform: translateX(-5px);
+                /* arrow slides left */
+            }
+
+            
+
+            /* Keyframes for continuous sliding */
+            @keyframes slideArrow {
+                0% {
+                    transform: translateX(0);
+                }
+
+                50% {
+                    transform: translateX(5px);
+                }
+
+                100% {
+                    transform: translateX(0);
+                }
+            }
+        </style>
+
+    </head>
+
+    <body>
+        <h2>Registered Student</h2>
+        <div class="qr-card">
+
+
+            <p><strong>Name:</strong>
+                <%= student.name %>
+            </p>
+            <p><strong>Registration No:</strong>
+                <%= student.reg_no %>
+            </p>
+            <img src="<%= qrImage %>" alt="QR Code" width="200" />
+
+        </div>
+        <br><br>
+        <button id="printBtn" style="width: 200px;" type="button">Print QR</button>
+        <br><br>
+        <a href="/api/auth/students" style="text-decoration:none;margin-right:700px;" class="btn-back">Back</a>
+
+        <script src="/js/studentQr.js"></script>
+    </body>
+
+</html>

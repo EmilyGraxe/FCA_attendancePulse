@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+
+    <head>
+        <title>Lecturer Dashboard</title>
+        <link rel="stylesheet" href="css/styles.css">
+        <link rel="stylesheet" href="/css/bootstrap.min.css">
+        <link rel="stylesheet" href="/css/dashboard.css">
+
+
+    </head>
+
+    <body>
+        <div class="d-flex" id="wrapper">
+            <!-- Sidebar -->
+            <div class="bg-white border-end" id="sidebar-wrapper">
+                <div class="sidebar-heading text-center py-4 fs-1 fw-bold text-green">FCA AttendancePulse</div>
+                <div class="list-group list-group-flush">
+                    <a href="/dashboard" class="list-group-item list-group-item-action bg-transparent">Dashboard</a>
+                    <a href="/api/auth/students"
+                        class="list-group-item list-group-item-action bg-transparent">Students</a>
+                    <a href="/lecturer" class="list-group-item list-group-item-action bg-transparent">Sessions</a>
+                    <a href="/api/report/attendance"
+                        class="list-group-item list-group-item-action bg-transparent">Attendance</a>
+                        <a href="/admin" class="list-group-item list-group-item-action bg-transparent">Admin</a>
+                    <button id="logoutBtn" class="btn btn-green">Logout</button>
+                </div>
+            </div>
+            <!-- Page Content -->
+            <div id="page-content-wrapper" style="margin-bottom: 100px;">
+                <nav class="navbar navbar-expand-lg border-bottom"
+                    style="margin-top: -20px;margin-right: -20px;margin-left: -20px">
+                    <div class="container-fluid">
+                        <button class="btn" id="sidebarToggle"
+                            style="background-color: rgb(17, 74, 17);color: white;width: 42px">☰</button>
+                        <h4 style="color: green; font-weight: bold">FCA AttendancePulse</h4>
+                        <span class="ms-auto">Logged in as: <strong id="navbarUser">Loading...</strong></span>
+                    </div>
+                </nav>
+
+                <div class="header" style="margin-top: 50px;background-color: #f4fdf7;color: rgb(17, 74, 17);">Lecturer Dashboard</div>
+
+                <div class="container">
+                    <div class="card" style="width:500px;margin-left:240px;">
+                        <button id="startSession" style="border-radius: 7px; ">Start Session</button>
+                        <br><br>
+
+                        <button id="openScanner" style="border-radius: 7px; ">Open Scanner</button>
+                        <br><br>
+
+                        <button id="closeSession" class="danger" style="border-radius: 7px; ">Close Session</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script src="/js/jquery.min.js"></script>
+        <script src="/js/bootstrap.bundle.min.js"></script>
+        <script src="/js/Chart.min.js"></script>
+        <script src="js/lecturer.js"></script>
+    </body>
+
+</html>
