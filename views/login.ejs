@@ -4,11 +4,56 @@
   <head>
     <title>Login</title>
     <link rel="stylesheet" href="/css/styles.css">
+    <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      background-image: url('/images/FCA2.jpeg');
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-position: center;
+      background-attachment: fixed;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* HEADER */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      padding: 15px 20px;
+    }
+
+    .header img {
+      position: absolute;
+      left: 20px;
+      height: 50px;
+    }
+
+    .header h1 {
+      font-size: 22px;
+      color: white;
+      font-weight: 600;
+    }
+ 
+  </style>
   </head>
 
   <body>
 
-    <div class="header">FCA AttendancePulse</div>
+    
+   <div class="header">
+    <img src="/images/fca.png" alt="FCA Logo">
+    <h1>FCA AttendancePulse</h1>
+   </div>
     <div class="container">
       <% if (message) { %>
         <div class="success">

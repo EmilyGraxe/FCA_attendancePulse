@@ -9,7 +9,6 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
   "dependencies": {
     "bcrypt": "^6.0.0",
     "cors": "^2.8.6",
@@ -24,5 +23,15 @@
     "pg": "^8.18.0",
     "qrcode": "^1.5.4",
     "uuid": "^13.0.0"
-  }
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/EmilyGraxe/FCA_attendancePulse.git"
+  },
+  "bugs": {
+    "url": "https://github.com/EmilyGraxe/FCA_attendancePulse/issues"
+  },
+  "homepage": "https://github.com/EmilyGraxe/FCA_attendancePulse#readme",
+  "description": ""
 }
