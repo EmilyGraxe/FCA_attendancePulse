@@ -37,9 +37,9 @@
         <h3><i class="fas fa-user-graduate me-2"> </i> Register Student</h3>
         <form action="/api/auth/register-student" method="POST">
           <label>Full Name *</label>
-          <input type="text" name="name" required>
+          <input type="text" name="name" value="<%= formData?.name || '' %>" required>
           <label>Email (optional)</label>
-          <input type="email" name="email">
+          <input type="email" name="email" value="<%= formData?.email || '' %>">
 
           <hr style="margin:18px 0 4px;">
           <h6 style="color:#666;font-size:.78em;text-transform:uppercase;letter-spacing:.05em;">
@@ -47,7 +47,7 @@
           </h6>
 
           <label>  PC Asset Tag</label>
-          <input type="text" name="pc_asset" placeholder="e.g. PC-042">
+          <input type="text" name="pc_asset" placeholder="e.g. PC-42" value="<%= formData?.pc_asset || '' %>">
 
           <label> Has charger?</label>
           <div class="charger-toggle">
@@ -56,14 +56,19 @@
           </div>
           <div class="charger-extra" id="chargerTagBox">
             <label>Charger Tag</label>
-            <input type="text" name="charger_tag" placeholder="e.g. CHG-017">
+            <input type="text" name="charger_tag" placeholder="e.g. CHG-17" value="<%= formData?.charger_asset || '' %>">
           </div>
 
           <label>Headset Asset Tag</label>
-          <input type="text" name="headset_asset" placeholder="e.g. HS-008">
+          <input type="text" name="headset_asset" placeholder="e.g. HS-08" value="<%= formData?.headset_asset || '' %>">
 
           <button type="submit">Register Student</button>
         </form>
+        <% if (msg) { %>
+           <div class="alert alert-danger">
+              <%= msg %>
+           </div>
+        <% } %>
       </div>
 
       <div class="card admin-card">

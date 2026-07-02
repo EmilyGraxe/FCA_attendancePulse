@@ -39,35 +39,70 @@ router.post("/logout", (req, res) => res.json({ message: "Logged out" }));
 
 // ─── REGISTER STUDENT ────────────────────────────────────────────────────────
 router.post("/register-student", async (req, res) => {
+  const client = await db.connect();
+
   try {
     const { name, email, pc_asset, charger_asset, headset_asset } = req.body;
 
-    if (!name)
-      return res.status(400).json({ message: "Student name required" });
+    if (!name) {
+      const { rows: students } = await client.query(
+        `SELECT id, name, email, reg_no, pc_asset, charger_asset, headset_asset
+         FROM users WHERE role='student' ORDER BY name`
+      );
+
+      return res.status(400).render("admin.ejs", {
+        students,
+        msg: "Student name is required.",
+        formData: req.body,
+      });
+    }
 
     const year = new Date().getFullYear();
     const qr_token = crypto.randomBytes(20).toString("hex");
 
-    // Get the next student number
-    const { rows } = await db.query(
+    await client.query("BEGIN");
+
+    // Check duplicate email FIRST
+    if (email?.trim()) {
+      const existing = await client.query(
+        "SELECT 1 FROM users WHERE email=$1",
+        [email.trim()]
+      );
+
+      if (existing.rows.length) {
+        await client.query("ROLLBACK");
+
+        const { rows: students } = await client.query(
+          `SELECT id, name, email, reg_no, pc_asset, charger_asset, headset_asset
+           FROM users WHERE role='student' ORDER BY name`
+        );
+
+        return res.status(400).render("admin.ejs", {
+          students,
+          msg: "Email already exists.",
+          formData: req.body,
+        });
+      }
+    }
+
+    // Get student number
+    const {
+      rows: [{ student_no }],
+    } = await client.query(
       "SELECT nextval('student_no_seq') AS student_no"
     );
 
-    const studentNo = rows[0].student_no;
+    const reg_no = `FCA_DICE_${year}-${String(student_no).padStart(2, "0")}`;
 
-    // Create registration number
-    const reg_no = `FCA_DICE_${year}-${String(studentNo).padStart(2, "0")}`;
-
-    // Insert student
-    await db.query(
+    await client.query(
       `INSERT INTO users
         (name, email, role, student_no, reg_no, qr_token,
          pc_asset, charger_asset, headset_asset)
-       VALUES ($1, $2, 'student', $3, $4, $5, $6, $7, $8)`,
+       VALUES ($1,$2,'student',$3,$4,$5,$6,$7,$8)`,
       [
         name.trim(),
         email?.trim() || null,
-        studentNo,
+        student_no,
         reg_no,
         qr_token,
         pc_asset?.trim() || null,
@@ -78,14 +113,25 @@ router.post("/register-student", async (req, res) => {
       ]
     );
 
-    res.redirect("/students");
+    await client.query("COMMIT");
+
+    return res.redirect("/students");
   } catch (err) {
+    await client.query("ROLLBACK");
     console.error(err);
 
-    if (err.code === "23505")
-      return res.status(400).json({ message: "Email already exists" });
+    const { rows: students } = await client.query(
+      `SELECT id, name, email, reg_no, pc_asset, charger_asset, headset_asset
+       FROM users WHERE role='student' ORDER BY name`
+    );
 
-    res.status(500).json({ message: "Server error" });
+    return res.status(500).render("admin.ejs", {
+      students,
+      msg: "Server error occurred.",
+      formData: req.body,
+    });
+  } finally {
+    client.release();
   }
 });
 

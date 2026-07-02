@@ -44,7 +44,7 @@ app.get("/", (req, res) => {
 });
 
 app.get("/dashboard", (req, res) => res.render("dashboard.ejs", {}));
-app.get("/admin", (req, res) => res.render("admin.ejs"));
+app.get("/admin", (req, res) => res.render("admin.ejs", {msg: req.query.msg || null}));
 app.get("/lecturer", (req, res) =>
   res.sendFile(path.join(__dirname, "public", "lecturer.html")),
 );
