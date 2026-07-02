@@ -173,7 +173,7 @@ router.get("/students", async (req, res) => {
   try {
     const { rows: students } = await db.query(
       `SELECT id, name, email, reg_no, pc_asset, charger_asset, headset_asset
-       FROM users WHERE role='student' ORDER BY name`,
+       FROM users WHERE role='student' ORDER BY pc_asset NULLS LAST`,
     );
     res.render("studentsT.ejs", { students, msg: req.query.msg || null });
   } catch (err) {
