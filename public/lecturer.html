@@ -1,65 +1,61 @@
 <!DOCTYPE html>
 <html>
+<head>
+  <title>Attendance Sessions — FCA</title>
+  <link rel="stylesheet" href="/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
 
-    <head>
-        <title>Lecturer Dashboard</title>
-        <link rel="stylesheet" href="css/styles.css">
-        <link rel="stylesheet" href="/css/bootstrap.min.css">
-        <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+<div class="d-flex" id="wrapper">
+  <div class="bg-white border-end" id="sidebar-wrapper">
+    <div class="sidebar-heading text-center py-4">
+      <img src="/images/fca.png" alt="FCA Logo" style="height:80px;">
+      <div class="brand-name">FCA Pulse</div>
+    </div>
+     <div class="list-group list-group-flush">
+    <a href="/dashboard"             class="list-group-item list-group-item-action"><i class="fas fa-chart-line me-2"></i> <span>Dashboard</span></a>
+    <a href="/api/auth/students"     class="list-group-item list-group-item-action"><i class="fas fa-user-graduate me-2"></i> <span>Students</span></a>
+    <a href="/api/auth/students/qr-sheet" target="_blank" class="list-group-item list-group-item-action"><i class="fas fa-print me-2"></i><span>Print QR Sheet</span></a>
+    <div class="sidebar-section">Attendance</div>
+    <a href="/lecturer"              class="list-group-item list-group-item-action"> <i class="fas fa-calendar-days me-2"></i><span>Sessions</span></a>
+    <a href="/api/report/attendance" class="list-group-item list-group-item-action"><i class="fas fa-chart-column me-2"></i><span>Report</span></a>
+    <div class="sidebar-section">Assets</div>
+    <a href="/kit-sessions"          class="list-group-item list-group-item-action"><i class="fas fa-box-open me-2"></i> <span>Asset Sessions</span></a>
+    <a href="/kit-dashboard"         class="list-group-item list-group-item-action"><i class="fas fa-laptop-house me-2"></i> <span>Asset Dashboard</span></a>
+    <a href="/kit-scan"              class="list-group-item list-group-item-action"><i class="fas fa-camera me-2"></i> <span>Scanner</span></a>
+    <div class="sidebar-section">System</div>
+    <a href="/admin"                 class="list-group-item list-group-item-action"><i class="fas fa-user-shield me-2"></i><span>Admin</span></a>
+    <button id="logoutBtn" class="btn btn-green"><i class="fas fa-arrow-right-from-bracket me-2"></i>   Logout</button>
+  </div>
+  </div>
 
+  <div id="page-content-wrapper">
+    <nav class="navbar navbar-expand-lg topnav-bar">
+      <div class="container-fluid">
+        <button class="btn sidebar-toggle-btn" id="sidebarToggle">☰</button>
+        <h4 class="navbar-brand-text mb-0">FCA AttendancePulse — <span class="text-green">Sessions</span></h4>
+        <span class="ms-auto navbar-user"><i class="fas fa-user-check me-4"></i> <strong id="navbarUser">…</strong></span>
+      </div>
+    </nav>
 
-    </head>
-
-    <body>
-        <div class="d-flex" id="wrapper">
-            <!-- Sidebar -->
-            <div class="bg-white border-end" id="sidebar-wrapper">
-                <div class="sidebar-heading text-center py-4 fs-1 fw-bold text-green">
-                          <img src="/images/fca.png" alt="FCA Logo" style="height: 90px;padding-bottom: -60px;margin-top: -46px">
-
-                </div>
-                <div class="list-group list-group-flush">
-                    <a href="/dashboard" class="list-group-item list-group-item-action bg-transparent">Dashboard</a>
-                    <a href="/api/auth/students"
-                        class="list-group-item list-group-item-action bg-transparent">Students</a>
-                    <a href="/lecturer" class="list-group-item list-group-item-action bg-transparent">Sessions</a>
-                    <a href="/api/report/attendance"
-                        class="list-group-item list-group-item-action bg-transparent">Attendance</a>
-                        <a href="/admin" class="list-group-item list-group-item-action bg-transparent">Admin</a>
-                    <button id="logoutBtn" class="btn btn-green">Logout</button>
-                </div>
-            </div>
-            <!-- Page Content -->
-            <div id="page-content-wrapper" style="margin-bottom: 100px;">
-                <nav class="navbar navbar-expand-lg border-bottom"
-                    style="margin-top: -20px;margin-right: -20px;margin-left: -20px">
-                    <div class="container-fluid">
-                        <button class="btn" id="sidebarToggle"
-                            style="background-color: rgb(17, 74, 17);color: white;width: 42px">☰</button>
-                        <h4 style="color: green; font-weight: bold">FCA AttendancePulse</h4>
-                        <span class="ms-auto">Logged in as: <strong id="navbarUser">Loading...</strong></span>
-                    </div>
-                </nav>
-
-                <div class="header" style="margin-top: 50px;background-color: #f4fdf7;color: rgb(17, 74, 17);">Lecturer Dashboard</div>
-
-                <div class="container">
-                    <div class="card" style="width:500px;margin-left:240px;">
-                        <button id="startSession" style="border-radius: 7px; ">Start Session</button>
-                        <br><br>
-
-                        <button id="openScanner" style="border-radius: 7px; ">Open Scanner</button>
-                        <br><br>
-
-                        <button id="closeSession" class="danger" style="border-radius: 7px; ">Close Session</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <script src="/js/jquery.min.js"></script>
-        <script src="/js/bootstrap.bundle.min.js"></script>
-        <script src="/js/Chart.min.js"></script>
-        <script src="js/lecturer.js"></script>
-    </body>
-
+    <div class="container" style="max-width:540px;margin-top:24px;">
+      <h4 style="color:var(--primary);"><i class="fas fa-calendar-days me-2"></i> Attendance Sessions</h4>
+      <div class="card p-4 mt-3">
+        <p class="text-muted" style="font-size:.88em;margin-bottom:18px;">
+          Manage <strong>attendance</strong> sessions. For asset tracking, use
+          <a href="/kit-sessions">Kit Sessions</a>.
+        </p>
+        <button id="startSession" class="btn w-100 mb-2" style="background:var(--primary);color:#fff;padding:10px;"><i class="fas fa-play me-2"></i> Start Attendance Session</button>
+        <button id="openScanner"  class="btn w-100 mb-2" style="background:var(--primary);color:#fff;padding:10px;"><i class="fas fa-camera me-2"></i> Open Attendance Scanner</button>
+        <button id="closeSession" class="btn w-100" style="background:#c04f43;color:#fff;padding:10px;"><i class="fas fa-stop me-2"></i> Close Attendance Session</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="/js/jquery.min.js"></script>
+<script src="/js/bootstrap.bundle.min.js"></script>
+<script src="/js/lecturer.js"></script>
+</body>
 </html>

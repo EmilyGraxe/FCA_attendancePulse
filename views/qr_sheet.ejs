@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Student QR Sheet — FCA</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+  <style>
+    @page { size: A4; margin: 10mm; }
+    * { box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; margin: 0; background: #f6faf6; color: #1c2e22; }
+    .toolbar {
+      position: sticky; top: 0; background: #fff; padding: 12px 18px;
+      border-bottom: 1px solid #e6ebe6; display: flex; gap: 12px;
+      align-items: center; z-index: 10;
+    }
+    .toolbar h2 { margin: 0; font-size: 1rem; color: #0f5132; }
+    .toolbar .grow { flex: 1; }
+    .toolbar select, .toolbar button {
+      padding: 6px 14px; border-radius: 8px; border: 1px solid #ccc;
+      background: #fff; cursor: pointer; font-size: .9rem;
+    }
+    .toolbar button.primary { background: #0f5132; color: #fff; border-color: #0f5132; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(<%= cols %>, 336px);
+      gap: 12px;
+      padding: 16px;
+      justify-content: center;
+    }
+    /* Each card: 336x192, two columns — QR on left, student details on right */
+    .card {
+      width: 336px; height: 192px;
+      background: #fff; border: 1px dashed #1e7f4f; border-radius: 8px;
+      padding: 10px;
+      display: grid;
+      grid-template-columns: 172px 1fr;
+      gap: 10px;
+      align-items: center;
+      page-break-inside: avoid;
+      overflow: hidden;
+    }
+    .card .qr {
+      width: 172px; height: 172px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .card .qr img { width: 100%; height: 100%; object-fit: contain; display: block; }
+    .card .info {
+      display: flex; flex-direction: column; justify-content: center;
+      min-width: 0; overflow: hidden;
+    }
+    .card .name {
+      font-weight: 700; font-size: .95rem; line-height: 1.15;
+      margin: 0 0 4px; word-break: break-word;
+    }
+    .card .reg  { font-size: .78rem; color: #555; margin-bottom: 6px; }
+    .card .pc   {
+      font-size: .78rem; color: #0a3d23;
+      background: #e7f4ec; border-radius: 6px; padding: 4px 8px;
+      display: inline-block; width: max-content; max-width: 100%;
+      word-break: break-word;
+    }
+    .empty { padding: 60px; text-align: center; color: #888; }
+
+    @media print {
+      .toolbar { display: none; }
+      body { background: #fff; }
+      .grid { padding: 0; gap: 8px; }
+      .card { border-color: #aaa; }
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <button onclick="if(document.referrer){history.back();}else{location.href='/admin';}">← Back</button>
+    <h2>Student QR Sheet — <%= students.length %> cards</h2>
+    <span class="grow"></span>
+    <label style="font-size:.85rem;color:#555;">Columns:</label>
+    <select onchange="location.href='?cols='+this.value">
+      <% [1,2,3].forEach(n => { %>
+        <option value="<%= n %>" <%= n===cols?'selected':'' %>><%= n %></option>
+      <% }) %>
+    </select>
+    <button class="primary" onclick="window.print()">Print</button>
+  </div>
+
+  <% if (!students.length) { %>
+    <div class="empty">No students with QR codes yet. <a href="/admin">Register students</a> first.</div>
+  <% } else { %>
+    <div class="grid">
+      <% students.forEach(s => { %>
+        <div class="card">
+          <div class="qr"><img src="<%= s.qrImage %>" alt="QR for <%= s.name %>"></div>
+          <div class="info">
+            <div class="name"><%= s.name %></div>
+            <div class="reg"><%= s.reg_no %></div>
+            <% if (s.pc_asset) { %><div class="pc"><span style="color: black;"><i class="fas fa-laptop me-2"></i></span> <%= s.pc_asset %></div><% } %>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  <% } %>
+</body>
+</html>

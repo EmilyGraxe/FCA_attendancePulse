@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Kit Dashboard — FCA</title>
+  <link rel="stylesheet" href="/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+  <style>
+    .stat-card { text-align:center; padding:18px 10px; border-radius:10px; }
+    .stat-card h2 { font-size:2.2rem; font-weight:700; margin:0; }
+    .stat-card p  { margin:4px 0 0; font-size:.9em; color:#555; }
+    .card-out      { background:#fff3cd; }
+    .card-returned { background:#d4edda; }
+    .card-notin    { background:#f8d7da; }
+    .card-total    { background:#d1ecf1; }
+
+    .badge-out      { background:#f0ad4e; color:#fff; padding:3px 10px; border-radius:12px; font-size:.8em; }
+    .badge-returned { background:#28a745; color:#fff; padding:3px 10px; border-radius:12px; font-size:.8em; }
+    .badge-notin    { background:#dc3545; color:#fff; padding:3px 10px; border-radius:12px; font-size:.8em; }
+
+    .filter-btn       { padding:5px 14px; border:1px solid #ccc; border-radius:20px;
+                        background:#fff; cursor:pointer; font-size:.85em; text-decoration:none;
+                        color:#333; display:inline-block; margin-right:6px; }
+    .filter-btn.active { background:rgb(17,74,17); color:#fff; border-color:rgb(17,74,17); }
+
+    table { width:100%; border-collapse:collapse; margin-top:14px; }
+    th,td { padding:10px 12px; border-bottom:1px solid #eee; font-size:.88em; }
+    th    { background:rgb(17,74,17); color:#fff; }
+
+    .asset-cell span { display:inline-block; padding:2px 8px; border-radius:12px;
+                       font-size:.78em; font-weight:600; margin-right:3px; }
+    .asset-pc      { background:#cce5ff; color:#004085; }
+    .asset-charger { background:#fff3cd; color:#856404; }
+    .asset-headset { background:#e2d9f3; color:#4a235a; }
+    .no-asset      { color:#aaa; }
+
+    .session-banner { background:linear-gradient(135deg,rgb(17,74,17),#2ecc71);
+                      color:#fff; padding:14px 20px; border-radius:10px; margin-bottom:20px; }
+    .session-banner h5 { margin:0 0 4px; font-weight:700; }
+    .session-banner small { opacity:.85; }
+  </style>
+</head>
+<body>
+<div class="d-flex" id="wrapper">
+  <%- include('partials/sidebar') %>
+  <div id="page-content-wrapper">
+    <%- include('partials/topnav', { title: 'Kit Dashboard' }) %>
+
+    <div class="container-fluid mt-4">
+
+      <% if (!session) { %>
+        <div class="alert alert-warning">
+          No active kit session. <a href="/kit-sessions" class="alert-link">Start one</a>.
+        </div>
+      <% } else { %>
+
+        <div class="session-banner">
+          <h5><i class="fas fa-box-open"></i> <%= session.label %></h5>
+          <small>Started: <%= new Date(session.started_at).toLocaleString('en-GB') %></small>
+          <a href="/kit-sessions" class="btn btn-sm btn-light float-end">Manage Sessions</a>
+        </div>
+
+        <div class="row g-3 mb-4">
+          <div class="col-6 col-md-3">
+            <div class="card stat-card card-total">
+              <h2><%= stats.total %></h2><p>Total Students</p>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="card stat-card card-out">
+              <h2><%= stats.out %></h2><p>Kit Out</p>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="card stat-card card-returned">
+              <h2><%= stats.returned %></h2><p>Returned</p>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="card stat-card card-notin">
+              <h2><%= stats.not_in %></h2><p>Not In</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filter + search -->
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+          <form method="GET" class="d-flex align-items-center gap-2 flex-wrap" style="margin:auto;">
+            <a href="?filter=all&search=<%= search %>"
+               class="filter-btn <%= filter==='all'?'active':'' %>">All</a>
+            <a href="?filter=out&search=<%= search %>"
+               class="filter-btn <%= filter==='out'?'active':'' %>">Kit Out</a>
+            <a href="?filter=returned&search=<%= search %>"
+               class="filter-btn <%= filter==='returned'?'active':'' %>">Returned</a>
+            <a href="?filter=not_in&search=<%= search %>"
+               class="filter-btn <%= filter==='not_in'?'active':'' %>">Not In</a>
+            <input name="search" value="<%= search %>"
+                   placeholder="Search student…"
+                   style="padding:5px 10px;border:1px solid #ccc;border-radius:20px;font-size:.85em;">
+            <input type="hidden" name="filter" value="<%= filter %>">
+            <button type="submit" style="padding:5px 14px;border-radius:20px;margin:auto;
+              background:rgb(17,74,17);color:#fff;border:none;font-size:.85em;"><i class="fas fa-search"></i></button>
+          </form>
+          <a href="/kit-scan" class="btn btn-sm ms-auto" style="background:rgb(17,74,17);color:#fff;margin:auto;">
+            <i class="fas fa-camera"></i> Open Kit Scanner
+          </a>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Reg No</th>
+              <th>Kit Assets</th>
+              <th>Status</th>
+              <th>Checked Out</th>
+              <th>Returned</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% students.forEach(s => { %>
+            <tr>
+              <td><strong><%= s.name %></strong></td>
+              <td><%= s.reg_no %></td>
+              <td class="asset-cell">
+                <% if (s.pc_asset)      { %><span class="asset-pc"><i class="fas fa-laptop"></i> <%= s.pc_asset %></span><% } %>
+                <% if (s.charger_asset) { %><span class="asset-charger"><i class="fas fa-bolt"></i> <%= s.charger_asset %></span><% } %>
+                <% if (s.headset_asset) { %><span class="asset-headset"><i class="fas fa-headset"></i> <%= s.headset_asset %></span><% } %>
+                <% if (!s.pc_asset && !s.charger_asset && !s.headset_asset) { %>
+                  <span class="no-asset">—</span>
+                <% } %>
+              </td>
+              <td>
+                <% if (s.status === 'out') { %>
+                  <span class="badge-out">Kit Out</span>
+                <% } else if (s.status === 'returned') { %>
+                  <span class="badge-returned">Returned</span>
+                <% } else { %>
+                  <span class="badge-notin">Not In</span>
+                <% } %>
+              </td>
+              <td><%= s.checked_out_at ? new Date(s.checked_out_at).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) : '—' %></td>
+              <td><%= s.returned_at   ? new Date(s.returned_at).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})   : '—' %></td>
+            </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+    </div>
+  </div>
+</div>
+<script src="/js/jquery.min.js"></script>
+<script src="/js/bootstrap.bundle.min.js"></script>
+<script src="/js/dashboard.js"></script>
+<script src="/js/kit.js"></script>
+</body>
+</html>

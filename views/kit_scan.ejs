@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Kit Scanner — FCA</title>
+  <link rel="stylesheet" href="/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+  <style>
+    .scan-card { padding: 18px; }
+    #reader { width: 100%; max-width: 460px; aspect-ratio: 1/1; border: 2px solid var(--primary);
+              border-radius: 12px; margin: 0 auto; overflow: hidden; }
+
+    .mode-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
+    .mode-btn {
+      padding: 12px 10px; background: #f1f5f3; border: 2px solid transparent;
+      border-radius: 10px; font-weight: 700; color: #555; cursor: pointer;
+      transition: all .15s; text-align: center; font-size: .92rem;
+    }
+    .mode-btn:hover { background: #e7efe9; }
+    .mode-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .mode-hint { font-size: .82rem; color: #666; margin: 0 0 10px; text-align: center; }
+
+    .pane { display: none; } .pane.active { display: block; }
+
+    .result-card { background: #f4fdf7; border: 1px solid #c3e6cb; border-radius: 10px;
+                   padding: 18px; margin-top: 14px; display: none; }
+    .result-card.error { background: #fdecea; border-color: #f5c2b8; }
+    .result-card.warn  { background: #fff8e1; border-color: #f0ad4e; }
+    .result-card.show  { display: block; }
+    .action-tag { display: inline-block; padding: 5px 14px; border-radius: 20px;
+                  font-size: .78em; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+    .checkout { background: #0d6efd; color: #fff; }
+    .return   { background: #198754; color: #fff; }
+    .att-only { background: #f0ad4e; color: #fff; }
+    .attendance-tag { background: #6f42c1; color: #fff; margin-left: 6px; }
+    .asset-row span { display: inline-block; padding: 3px 10px; border-radius: 12px;
+                      font-size: .8em; font-weight: 600; margin-right: 4px; margin-top: 4px; }
+    .asset-pc      { background: #cce5ff; color: #004085; }
+    .asset-charger { background: #fff3cd; color: #856404; }
+    .asset-headset { background: #e2d9f3; color: #4a235a; }
+
+    .no-session { background: #fff3cd; border: 1px solid #ffc107; padding: 12px 18px;
+                  border-radius: 8px; margin-bottom: 16px; }
+    .scan-count { font-size: .85em; color: #666; }
+
+    .input-group-label { font-size: .8rem; font-weight: 600; color: #555;
+                         text-transform: uppercase; letter-spacing: .04em; margin: 12px 0 4px; }
+    input.fld {
+      width: 100%; padding: 9px 12px; border: 1px solid #ccc; border-radius: 8px;
+      font-size: .95rem;
+    }
+    .pc-share-step {
+      background: #f8f9fa; border: 1px solid #e6ebe6; border-radius: 10px;
+      padding: 12px 14px; margin-bottom: 10px;
+    }
+    .pc-share-step h6 { margin: 0 0 6px; font-size: .85rem; color: var(--primary); }
+
+    .open-share {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; background: #fff8e1; border: 1px solid #f0ad4e;
+      border-radius: 8px; margin-bottom: 6px; font-size: .9rem;
+    }
+    .open-share .pc-no { font-weight: 700; color: #b8500a; min-width: 60px; }
+    .open-share .grow { flex: 1; }
+    .open-share button { background: var(--primary); color: #fff; border: 0;
+                         border-radius: 6px; padding: 5px 12px; font-size: .8rem; cursor: pointer; }
+
+    .toggle-row { display: flex; align-items: center; gap: 8px; font-size: .88rem; margin-top: 10px;
+                  padding: 8px 12px; background: #f8f9fa; border-radius: 8px; }
+
+    .search-results {
+      background: #fff; border: 1px solid #ccc; border-radius: 8px;
+      max-height: 200px; overflow-y: auto; margin-top: 4px;
+    }
+    .search-results .hit {
+      padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #eee; font-size: .88rem;
+    }
+    .search-results .hit:hover { background: #f4fdf7; }
+    .search-results .hit:last-child { border-bottom: 0; }
+    .badge-mini { display: inline-block; padding: 1px 7px; background: #e7efe9; color: #555;
+                  border-radius: 10px; font-size: .72rem; margin-right: 4px; }
+
+    .modal-backdrop-c { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 1050;
+                        display: none; align-items: center; justify-content: center; }
+    .modal-backdrop-c.show { display: flex; }
+    .modal-box { background: #fff; border-radius: 12px; padding: 22px; min-width: 320px; max-width: 92vw; }
+    .modal-box h5 { margin-top: 0; color: var(--primary); }
+
+    /* Scan alert toast */
+    .scan-toast {
+      position: fixed; top: 18px; left: 50%; transform: translateX(-50%) translateY(-20px);
+      background: #0f5132; color: #fff; padding: 14px 22px; border-radius: 12px;
+      font-weight: 600; font-size: 1rem; box-shadow: 0 6px 22px rgba(0,0,0,.2);
+      opacity: 0; transition: all .25s ease; z-index: 2000; pointer-events: none;
+      max-width: 90vw; text-align: center;
+    }
+    .scan-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .scan-toast.err  { background: #b02a37; }
+    .scan-toast.warn { background: #b8500a; }
+
+    /* Unlocked indicator */
+    .unlock-pill { display:inline-block; padding:2px 10px; border-radius:12px;
+                   font-size:.72rem; font-weight:700; margin-left:8px; }
+    .unlock-pill.on  { background:#d1e7dd; color:#0f5132; }
+    .unlock-pill.off { background:#f8d7da; color:#842029; }
+  </style>
+</head>
+<body>
+<div class="d-flex" id="wrapper">
+  <%- include('partials/sidebar') %>
+  <div id="page-content-wrapper">
+    <%- include('partials/topnav', { title: 'Kit Scanner' }) %>
+
+    <div class="container-fluid">
+      <% if (!session) { %>
+        <div class="no-session">
+          ⚠️ No active kit session.
+          <a href="/kit-sessions">Start a kit session</a> first.
+        </div>
+      <% } else { %>
+        <div class="card scan-card mb-3" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+          <div>
+            <strong><i class="fas fa-box"></i> Session:</strong> <%= session.label %>
+            <div class="scan-count">Started <%= new Date(session.started_at).toLocaleString('en-GB') %></div>
+          </div>
+          <div class="scan-count">Scans this load: <strong id="scanCount">0</strong></div>
+        </div>
+
+        <!-- SCANNER (single column, full width) -->
+        <div class="card scan-card">
+          <div class="mode-bar">
+            <button class="mode-btn active" data-mode="kit-out"><i class="fas fa-box-open"></i> Asset Out<br><small style="font-weight:400;opacity:.85;">Asset scan</small></button>
+            <button class="mode-btn" data-mode="pc-share"><i class="fas fa-laptop"></i> PC Share<br><small style="font-weight:400;opacity:.85;">Borrow another PC</small></button>
+            <button class="mode-btn" data-mode="pc-return"><i class="fas fa-laptop"></i> PC Return<br><small style="font-weight:400;opacity:.85;">Unlock once with password</small></button>
+          </div>
+          <p class="mode-hint" id="modeHint">Scan a student card to check out their kit.</p>
+
+          <div id="reader"></div>
+          <p id="status" class="text-center text-muted mt-3 mb-0">Point camera at student QR</p>
+
+          <!-- Result card sits directly under the scanner now -->
+          <div id="resultCard" class="result-card">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <h5 id="studentName" style="margin:0;"></h5>
+                <small id="studentReg" style="color:#666;"></small>
+              </div>
+              <div>
+                <span id="actionTag" class="action-tag"></span>
+                <span id="attendanceTag" class="action-tag attendance-tag" style="display:none;">✓ Attendance</span>
+              </div>
+            </div>
+            <div class="asset-row mt-2" id="assetRow"></div>
+            <div id="attendanceLine" style="display:none;font-size:.85rem;color:#6f42c1;margin-top:6px;"></div>
+            <div id="loanWarning" style="display:none;background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:10px 14px;margin-top:10px;font-size:.88rem;"></div>
+          </div>
+
+          <!-- PC SHARE form -->
+          <div class="pane" id="pane-pcshare" style="margin-top:14px;">
+            <div class="pc-share-step">
+              <h6>1. Search the PC being shared</h6>
+              <input class="fld" id="psPcNo" placeholder="Search by PC number, asset tag, or student name…" autocomplete="off">
+              <div id="psSearchResults" class="search-results" style="display:none;"></div>
+              <small style="color:#666;">All PCs allocated to students are searchable.</small>
+            </div>
+            <div class="pc-share-step">
+              <h6>2. Scan the borrower's card with the camera above</h6>
+              <input class="fld" id="psBorrower" placeholder="Borrower QR will appear here" readonly>
+            </div>
+            <div class="pc-share-step">
+              <h6>3. Note (optional)</h6>
+              <input class="fld" id="psNote" placeholder="e.g. own PC charging">
+            </div>
+            <button class="btn w-100 mt-2" style="background:var(--primary);color:#fff;font-weight:600;padding:10px;" id="psStart">
+              Start share
+            </button>
+            <p id="psStatus" class="text-center mt-2 mb-0" style="font-size:.85rem;color:var(--muted);"></p>
+          </div>
+
+          <!-- PC RETURN settings -->
+          <div class="pane" id="pane-pcreturn" style="margin-top:14px;">
+            <div class="pc-share-step">
+              <h6>Return mode <span id="unlockPill" class="unlock-pill off">LOCKED</span></h6>
+              <p class="mb-2" style="font-size:.85rem;color:#555;">
+                Enter your password <strong>once</strong> to unlock returns for this session. Then keep scanning student cards — the system will identify each open PC automatically.
+              </p>
+              <button class="btn" style="background:var(--primary);color:#fff;" id="unlockReturnBtn">🔓 Unlock returns</button>
+              <button class="btn" style="background:#e9ecef;display:none;" id="lockReturnBtn">Lock</button>
+            </div>
+            <label class="toggle-row">
+              <input type="checkbox" id="returnAlsoAttendance" checked>
+              <span>
+                <strong>Record attendance automatically</strong><br>
+                <small style="color:#666;">Marks the student present in today's paired attendance session. Default ON.</small>
+              </span>
+            </label>
+            <p class="mb-0 mt-2" style="font-size:.82rem;color:#666;">
+              If a student never took a PC, they'll still be recorded for attendance and you'll be notified.
+            </p>
+          </div>
+        </div>
+
+        <!-- OPEN PC SHARES — now BELOW the scanner -->
+        <div class="card scan-card mt-3">
+          <h6 style="color:var(--primary);font-weight:700;margin-bottom:10px;">🖥️ Open PC Shares</h6>
+          <div id="openShares">
+            <% if (!openShares || !openShares.length) { %>
+              <p class="text-muted mb-0" style="font-size:.88rem;">None right now.</p>
+            <% } else { %>
+              <% openShares.forEach(s => { %>
+                <div class="open-share" data-id="<%= s.id %>" data-pc="<%= s.pc_no %>">
+                  <span class="pc-no"><%= s.pc_no %></span>
+                  <span class="grow">
+                    <strong><%= s.borrower_full || s.borrower_name %></strong>
+                    <% if (s.owner_full) { %><br><small style="color:#777;">Owner: <%= s.owner_full %></small><% } %>
+                    <% if (s.note) { %><br><small style="color:#777;"><%= s.note %></small><% } %>
+                  </span>
+                  <button class="ret-btn">Return</button>
+                </div>
+              <% }) %>
+            <% } %>
+          </div>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<!-- Scan alert toast -->
+<div id="scanToast" class="scan-toast"></div>
+
+<!-- Password modal (used for one-time unlock OR manual share-row returns) -->
+<div class="modal-backdrop-c" id="pwModal">
+  <div class="modal-box">
+    <h5 id="pwTitle">Unlock PC Return</h5>
+    <p id="pwTarget" style="font-size:.9rem;color:#555;margin-bottom:10px;"></p>
+    <input type="password" class="fld" id="pwInput" placeholder="Your password" autocomplete="current-password">
+    <p id="pwError" style="color:var(--danger,#c0392b);font-size:.85rem;margin:6px 0 0;display:none;"></p>
+    <div class="d-flex gap-2 mt-3">
+      <button class="btn flex-grow-1" id="pwCancel" style="background:#e9ecef;">Cancel</button>
+      <button class="btn flex-grow-1" id="pwConfirm" style="background:var(--primary);color:#fff;">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/html5-qrcode.min.js"></script>
+<script src="/js/jquery.min.js"></script>
+<script src="/js/bootstrap.bundle.min.js"></script>
+<script src="/js/dashboard.js"></script>
+<script>
+(function () {
+  const token = localStorage.getItem('token');
+  if (!token) { window.location.href = '/'; return; }
+  const headers = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token };
+
+  const statusEl    = document.getElementById('status');
+  const resultCard  = document.getElementById('resultCard');
+  const scanCountEl = document.getElementById('scanCount');
+  const modeHint    = document.getElementById('modeHint');
+  const beep        = new Audio('/sounds/beep_short.ogg');
+  const toastEl     = document.getElementById('scanToast');
+  const unlockPill  = document.getElementById('unlockPill');
+
+  let scanCount = 0;
+  let lastToken = null, lastTime = 0;
+  let mode = 'kit-out'; // 'kit-out' | 'pc-share' | 'pc-return'
+  // Cached password for the PC-return session — entered ONCE when the user
+  // clicks the PC Return mode (or the Unlock button). Stays in memory only.
+  let returnPassword = null;
+
+  const HINTS = {
+    'kit-out':   'Scan a student card to issue their kit. (No attendance is recorded here.)',
+    'pc-share':  'Search the PC being shared, then scan the borrower\'s card.',
+    'pc-return': 'Unlock with your password once, then scan student cards to return PCs.'
+  };
+
+  // ── Toast helper ─────────────────────────────────────────────────
+  let toastTimer = 0;
+  function showToast(msg, kind) {
+    toastEl.className = 'scan-toast' + (kind ? ' ' + kind : '');
+    toastEl.textContent = msg;
+    requestAnimationFrame(() => toastEl.classList.add('show'));
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toastEl.classList.remove('show'), 3200);
+  }
+
+  function setUnlockUi(unlocked) {
+    unlockPill.textContent = unlocked ? 'UNLOCKED' : 'LOCKED';
+    unlockPill.className = 'unlock-pill ' + (unlocked ? 'on' : 'off');
+    document.getElementById('unlockReturnBtn').style.display = unlocked ? 'none' : '';
+    document.getElementById('lockReturnBtn').style.display   = unlocked ? '' : 'none';
+  }
+
+  // ── Mode switching ────────────────────────────────────────────────
+  document.querySelectorAll('.mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      mode = btn.dataset.mode;
+      modeHint.textContent = HINTS[mode];
+      document.getElementById('pane-pcshare').classList.toggle('active', mode === 'pc-share');
+      document.getElementById('pane-pcreturn').classList.toggle('active', mode === 'pc-return');
+      resultCard.classList.remove('show');
+      statusEl.textContent = mode === 'kit-out'
+        ? 'Point camera at student QR'
+        : (mode === 'pc-share' ? 'Camera will capture the borrower card' : 'Scan student cards to return PCs');
+
+      // On entering PC Return, if not yet unlocked, prompt for password ONCE.
+      if (mode === 'pc-return' && !returnPassword) {
+        promptUnlock();
+      }
+    });
+  });
+
+  document.getElementById('unlockReturnBtn').addEventListener('click', promptUnlock);
+  document.getElementById('lockReturnBtn').addEventListener('click', () => {
+    returnPassword = null; setUnlockUi(false);
+    showToast('🔒 Returns locked', 'warn');
+  });
+
+  // ── Camera-side dispatch ──────────────────────────────────────────
+  async function handleScan(qr_token) {
+    const now = Date.now();
+    if (qr_token === lastToken && now - lastTime < 2500) return;
+    lastToken = qr_token; lastTime = now;
+    try { beep.play(); } catch(_) {}
+
+    if (mode === 'pc-share') {
+      const b = document.getElementById('psBorrower');
+      if (!b.value) { b.value = qr_token; setPsStatus('✓ Borrower captured', 'var(--primary)'); }
+      else setPsStatus('Borrower already set. Clear to rescan.', '#b8500a');
+      return;
+    }
+
+    if (mode === 'pc-return') {
+      if (!returnPassword) {
+        showToast('🔒 Unlock returns with your password first', 'warn');
+        promptUnlock();
+        return;
+      }
+      await doReturnScan(qr_token);
+      return;
+    }
+
+    // Default: kit-out
+    try {
+      const res = await fetch('/kit-scan/kit-out', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ qr_token }),
+      });
+      const data = await res.json();
+      renderResult(data);
+      if (data.ok && data.student) {
+        showToast('📤 ' + data.student.name + ' took the PC' +
+          (data.student.pc ? ' (' + data.student.pc + ')' : ''));
+      } else if (!data.ok) {
+        showToast('❌ ' + (data.error || 'Scan failed'), 'err');
+      }
+    } catch (e) {
+      statusEl.textContent = '❌ Network error';
+      showToast('❌ Network error', 'err');
+    }
+  }
+
+  async function doReturnScan(qr_token) {
+    const recordAtt = !!document.getElementById('returnAlsoAttendance').checked;
+    try {
+      const r = await fetch('/kit-scan/pc-return/scan', {
+        method: 'POST', headers,
+        body: JSON.stringify({ qr_token, password: returnPassword, record_attendance: recordAtt }),
+      });
+      const d = await r.json();
+      if (!d.ok) {
+        // If password was rejected, clear cache and force re-unlock
+        if (d.code === 'BAD_PASSWORD') {
+          returnPassword = null; setUnlockUi(false);
+          showToast('❌ Password rejected — unlock again', 'err');
+          promptUnlock();
+          return;
+        }
+        showToast('❌ ' + (d.error || 'Return failed'), 'err');
+        statusEl.textContent = '❌ ' + (d.error || 'Return failed');
+        return;
+      }
+
+      // Update UI: result card + remove the share row if applicable
+      if (d.share_id) {
+        document.querySelectorAll('.open-share').forEach(row => {
+          if (row.dataset.id == d.share_id) row.remove();
+        });
+      }
+
+      const who = (d.student && d.student.name) || 'Student';
+      let msg;
+      if (d.kind === 'attendance_only') {
+        msg = '🟡 ' + who + ' had no PC — marked for attendance';
+      } else if (d.kind === 'share') {
+        msg = '📥 ' + who + ' returned shared PC ' + (d.pc_no || '');
+      } else {
+        msg = '📥 ' + who + ' returned PC ' + (d.pc_no || '');
+      }
+      if (d.attendance_marked) msg += ' • ✓ attendance recorded';
+      showToast(msg);
+      statusEl.textContent = msg;
+
+      // Render the result card the same way as kit-out
+      renderResult({
+        ok: true,
+        action: d.kind === 'attendance_only' ? 'attendance_only' : 'return',
+        student: d.student,
+        attendance_marked: d.attendance_marked,
+        attendance_session_label: d.attendance_session_label,
+        no_asset: d.kind === 'attendance_only',
+      });
+    } catch (_) {
+      statusEl.textContent = '❌ Network error';
+      showToast('❌ Network error', 'err');
+    }
+  }
+
+  function renderResult(data) {
+    if (!data.ok) {
+      resultCard.className = 'result-card error show';
+      document.getElementById('studentName').textContent = (data.student && data.student.name) || 'Error';
+      document.getElementById('studentReg').textContent = (data.student && data.student.reg_no) || '';
+      document.getElementById('actionTag').textContent = data.error || '';
+      document.getElementById('actionTag').className = 'action-tag';
+      document.getElementById('assetRow').innerHTML = '';
+      document.getElementById('loanWarning').style.display = 'none';
+      document.getElementById('attendanceTag').style.display = 'none';
+      document.getElementById('attendanceLine').style.display = 'none';
+      statusEl.textContent = '❌ ' + (data.error || 'Scan failed');
+      return;
+    }
+
+    scanCount++;
+    scanCountEl.textContent = scanCount;
+
+    const s = data.student;
+    document.getElementById('studentName').textContent = s.name;
+    document.getElementById('studentReg').textContent  = s.reg_no || '';
+
+    const actionTag = document.getElementById('actionTag');
+    if (data.action === 'attendance_only') {
+      resultCard.className = 'result-card warn show';
+      actionTag.textContent = '⚠ No PC — attendance only';
+      actionTag.className = 'action-tag att-only';
+    } else {
+      resultCard.className = 'result-card show';
+      actionTag.textContent = data.action === 'checkout' ? '📤 Kit Out' : '📥 Returned';
+      actionTag.className   = 'action-tag ' + (data.action === 'checkout' ? 'checkout' : 'return');
+    }
+
+    const attTag  = document.getElementById('attendanceTag');
+    const attLine = document.getElementById('attendanceLine');
+    if (data.attendance_marked) {
+      attTag.style.display = 'inline-block';
+      attLine.style.display = 'block';
+      attLine.textContent = '🎯 Marked Present in: ' + (data.attendance_session_label || 'attendance session');
+    } else {
+      attTag.style.display = 'none';
+      attLine.style.display = 'none';
+    }
+
+    const assetRow = document.getElementById('assetRow');
+    assetRow.innerHTML = '';
+    if (s.pc)      assetRow.innerHTML += '<span class="asset-pc">💻 ' + s.pc + '</span>';
+    if (s.charger) assetRow.innerHTML += '<span class="asset-charger">🔌 ' + s.charger + '</span>';
+    if (s.headset) assetRow.innerHTML += '<span class="asset-headset">🎧 ' + s.headset + '</span>';
+  }
+
+  // ── PC Share helpers ─────────────────────────────────────────────
+  function setPsStatus(msg, color) {
+    const el = document.getElementById('psStatus');
+    el.textContent = msg; el.style.color = color || 'var(--muted)';
+  }
+
+  function wireSearch(inputId, resultsId, onPick) {
+    const input = document.getElementById(inputId);
+    const results = document.getElementById(resultsId);
+    if (!input) return;
+    let t = 0;
+    input.addEventListener('input', () => {
+      clearTimeout(t);
+      const q = input.value.trim();
+      if (!q) { results.style.display = 'none'; return; }
+      t = setTimeout(async () => {
+        const r = await fetch('/kit-scan/pc-search?q=' + encodeURIComponent(q), { headers });
+        const d = await r.json();
+        if (!d.ok || !d.results.length) { results.style.display = 'none'; return; }
+        results.innerHTML = d.results.map(h =>
+          '<div class="hit" data-pc="' + h.pc_no + '" data-share="' + (h.share_id || '') + '">' +
+            '<span class="badge-mini">' + (h.type === 'open_share' ? 'open share' : 'allocated') + '</span>' +
+            '<strong>' + h.pc_no + '</strong>' +
+            (h.owner ? ' — ' + h.owner : '') +
+            (h.borrower ? ' (used by ' + h.borrower + ')' : '') +
+          '</div>'
+        ).join('');
+        results.style.display = 'block';
+        results.querySelectorAll('.hit').forEach(hit => {
+          hit.addEventListener('click', () => {
+            onPick({ pc_no: hit.dataset.pc, share_id: hit.dataset.share || null });
+            results.style.display = 'none';
+          });
+        });
+      }, 180);
+    });
+    document.addEventListener('click', (e) => {
+      if (!results.contains(e.target) && e.target !== input) results.style.display = 'none';
+    });
+  }
+  wireSearch('psPcNo', 'psSearchResults', ({ pc_no }) => { document.getElementById('psPcNo').value = pc_no; });
+
+  document.getElementById('psStart')?.addEventListener('click', async () => {
+    const body = {
+      pc_no: document.getElementById('psPcNo').value.trim(),
+      borrower_qr_token: document.getElementById('psBorrower').value.trim(),
+      note: document.getElementById('psNote').value.trim(),
+    };
+    if (!body.pc_no) return setPsStatus('Select a PC first.', 'var(--danger,#c0392b)');
+    if (!body.borrower_qr_token) return setPsStatus('Scan the borrower card first.', 'var(--danger,#c0392b)');
+    const r = await fetch('/kit-scan/pc-share', { method: 'POST', headers, body: JSON.stringify(body) });
+    const d = await r.json();
+    if (!d.ok) return setPsStatus('❌ ' + d.error, 'var(--danger,#c0392b)');
+    setPsStatus('✅ ' + d.share.pc_no + ' shared with ' + (d.share.borrower_full || d.share.borrower_name), 'var(--primary)');
+    showToast('🤝 ' + (d.share.borrower_full || d.share.borrower_name) + ' borrowed ' + d.share.pc_no);
+    ['psPcNo','psBorrower','psNote'].forEach(id => document.getElementById(id).value = '');
+    appendOpenShare(d.share);
+  });
+
+  function appendOpenShare(s) {
+    const container = document.getElementById('openShares');
+    const placeholder = container.querySelector('p.text-muted');
+    if (placeholder) placeholder.remove();
+    const div = document.createElement('div');
+    div.className = 'open-share';
+    div.dataset.id = s.id; div.dataset.pc = s.pc_no;
+    div.innerHTML = '<span class="pc-no">' + s.pc_no + '</span>' +
+      '<span class="grow"><strong>' + (s.borrower_full || s.borrower_name) + '</strong>' +
+      (s.owner_full ? '<br><small style="color:#777;">Owner: ' + s.owner_full + '</small>' : '') +
+      (s.note ? '<br><small style="color:#777;">' + s.note + '</small>' : '') + '</span>' +
+      '<button class="ret-btn">Return</button>';
+    container.prepend(div);
+    bindReturnBtn(div.querySelector('.ret-btn'));
+  }
+
+  // ── Password modal (unlock OR manual return-row) ─────────────────
+  // pendingMode: 'unlock' or 'manual-return'
+  let pendingMode = null;
+  let pendingTarget = null;
+
+  function promptUnlock() {
+    pendingMode = 'unlock'; pendingTarget = null;
+    document.getElementById('pwTitle').textContent = '🔓 Unlock PC Return';
+    document.getElementById('pwTarget').textContent =
+      'Enter your password once. It stays cached until you lock returns or reload the page.';
+    document.getElementById('pwInput').value = '';
+    document.getElementById('pwError').style.display = 'none';
+    document.getElementById('pwModal').classList.add('show');
+    setTimeout(() => document.getElementById('pwInput').focus(), 50);
+  }
+
+  function promptManualReturn(target) {
+    pendingMode = 'manual-return'; pendingTarget = target;
+    document.getElementById('pwTitle').textContent = 'Confirm PC return';
+    document.getElementById('pwTarget').textContent =
+      'Returning ' + (target.pc_no || ('share #' + target.share_id)) +
+      ((target.student && target.student.name) ? ' — ' + target.student.name : '');
+    // Pre-fill cached password if present so user just clicks confirm
+    document.getElementById('pwInput').value = returnPassword || '';
+    document.getElementById('pwError').style.display = 'none';
+    document.getElementById('pwModal').classList.add('show');
+    setTimeout(() => document.getElementById('pwInput').focus(), 50);
+  }
+
+  document.getElementById('pwCancel').addEventListener('click', () => {
+    document.getElementById('pwModal').classList.remove('show');
+    pendingMode = null; pendingTarget = null;
+  });
+  document.getElementById('pwConfirm').addEventListener('click', confirmPw);
+  document.getElementById('pwInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') confirmPw();
+  });
+
+  async function confirmPw() {
+    const password = document.getElementById('pwInput').value;
+    const errEl = document.getElementById('pwError');
+    errEl.style.display = 'none';
+    if (!password) { errEl.textContent = 'Password required'; errEl.style.display = 'block'; return; }
+
+    if (pendingMode === 'unlock') {
+      // Verify with server, then cache
+      const r = await fetch('/kit-scan/pc-return/unlock', {
+        method: 'POST', headers, body: JSON.stringify({ password }),
+      });
+      const d = await r.json();
+      if (!d.ok) { errEl.textContent = d.error || 'Incorrect password'; errEl.style.display = 'block'; return; }
+      returnPassword = password;
+      setUnlockUi(true);
+      document.getElementById('pwModal').classList.remove('show');
+      showToast('🔓 PC Return unlocked');
+      return;
+    }
+
+    if (pendingMode === 'manual-return') {
+      const recordAtt = !!document.getElementById('returnAlsoAttendance').checked;
+      const payload = {
+        share_id: pendingTarget.share_id || undefined,
+        checkout_id: pendingTarget.checkout_id || undefined,
+        pc_no: pendingTarget.pc_no || undefined,
+        password,
+        record_attendance: recordAtt,
+      };
+      const r = await fetch('/kit-scan/pc-return', {
+        method: 'POST', headers, body: JSON.stringify(payload),
+      });
+      const d = await r.json();
+      if (!d.ok) { errEl.textContent = d.error; errEl.style.display = 'block'; return; }
+      // Cache password for the rest of the session
+      returnPassword = password; setUnlockUi(true);
+      document.getElementById('pwModal').classList.remove('show');
+      if (pendingTarget.share_id) {
+        document.querySelectorAll('.open-share').forEach(row => {
+          if (row.dataset.id == pendingTarget.share_id) row.remove();
+        });
+      }
+      const attMsg = d.attendance_marked ? '  •  ✓ attendance recorded' : '';
+      const m = '📥 ' + (d.pc_no || 'PC') + ' returned.' + attMsg;
+      statusEl.textContent = m; showToast(m);
+      pendingMode = null; pendingTarget = null;
+    }
+  }
+
+  function bindReturnBtn(btn) {
+    btn.addEventListener('click', () => {
+      const wrap = btn.closest('.open-share');
+      promptManualReturn({ share_id: wrap.dataset.id, pc_no: wrap.dataset.pc });
+    });
+  }
+  document.querySelectorAll('.open-share .ret-btn').forEach(bindReturnBtn);
+
+  // ── Start camera ─────────────────────────────────────────────────
+  <% if (session) { %>
+  const html5QrCode = new Html5Qrcode('reader');
+  Html5Qrcode.getCameras().then(devices => {
+    if (!devices || !devices.length) { statusEl.textContent = '❌ No camera found'; return; }
+    const camId = (devices.find(d => /back|rear|environment/i.test(d.label)) || devices[0]).id || devices[0].deviceId;
+    html5QrCode.start(camId, { fps: 10, qrbox: 240 }, handleScan)
+      .catch(err => { statusEl.textContent = '❌ Camera error: ' + err; });
+  }).catch(() => { statusEl.textContent = '❌ Camera access denied'; });
+  <% } %>
+})();
+</script>
+</body>
+</html>

@@ -1,134 +1,112 @@
 <!DOCTYPE html>
 <html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Students — FCA</title>
+  <link rel="stylesheet" href="/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
 
-  <head>
-    <meta charset="UTF-8">
-    <title>Students List</title>
-    <link rel="stylesheet" href="/css/styles.css">
-    <style>
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 20px;
-        border: 1px solid var(--primary);
-      }
+  <style>
+    table { width:100%; border-collapse:collapse; margin-top:18px;
+            background:#fff; border-radius:10px; overflow:hidden; box-shadow:var(--shadow-sm); }
+    th,td { padding:11px 14px; border-bottom:1px solid var(--border); font-size:.9em; vertical-align:top; }
+    th { background:var(--primary); color:#fff; text-align:left; font-weight:600; }
+    .qr-link { color:#c0392b; font-weight:600; text-decoration:none; }
+    .qr-link:hover { color:var(--primary); }
+    .msg { padding:10px 16px; border-radius:8px; margin-bottom:14px;
+           background:#d4edda; color:#155724; border:1px solid #c3e6cb; }
+    .asset-badge { background:#eaf4ea; color:var(--primary); padding:2px 8px;
+                   border-radius:12px; font-size:.78em; font-weight:600; margin-right:4px; }
+    .no-asset { color:#aaa; font-size:.85em; }
+    details summary { cursor:pointer; color:var(--primary); font-size:.82em; margin-top:6px; }
+    .asset-form input { width:120px; padding:4px 6px; border:1px solid #ccc;
+                        border-radius:4px; font-size:.85em; margin-right:4px; }
+    .asset-form button { padding:4px 10px; background:var(--primary); color:#fff;
+                         border:none; border-radius:4px; font-size:.85em; cursor:pointer; }
+    .danger-btn { background:#c0392b; color:#fff; border:0; border-radius:4px;
+                  padding:4px 10px; font-size:.78em; cursor:pointer; }
+    .toolbar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:6px; }
+    .toolbar .grow { flex:1; }
+    .search { padding:7px 12px; border:1px solid #ccc; border-radius:8px; min-width:240px; }
+  </style>
+</head>
+<body>
+<div class="d-flex" id="wrapper">
+  <%- include('partials/sidebar') %>
+  <div id="page-content-wrapper">
+    <%- include('partials/topnav', { title: 'Students' }) %>
 
-      th,
-      td {
-        padding: 12px;
-        border-bottom: 1px solid #ddd;
-        text-align: left;
-        border: 1px solid var(--primary);
-      }
+    <div class="container-fluid" style="max-width:1100px;">
+      <% if (msg) { %><div class="msg"><%= msg %></div><% } %>
 
-      th {
-        background-color: rgb(17, 74, 17);
-        color: white;
-      }
-
-      a {
-        text-decoration: none;
-        font-weight: 400;
-      }
-      .stdLink {
-        color: rgb(233, 52, 52) !important;
-        text-decoration: none;
-        font-weight: 500;
-        font-weight: bold;
-      }
-
-      .stdLink:hover {
-        color: rgb(17, 74, 17) !important;
-      }
-
-      .container {
-        width: 90%;
-        max-width: 800px;
-        margin: 40px auto;
-      }
-
-      h2 {
-        text-align: center;
-        color: var(--primary);
-        margin-bottom: 20px;
-      }
-    </style>
-    <link rel="stylesheet" href="/css/bootstrap.min.css">
-    <link rel="stylesheet" href="/css/dashboard.css">
-
-  </head>
-
-  <body>
-    <div class="d-flex" id="wrapper">
-      <!-- Sidebar -->
-      <div class="bg-white border-end" id="sidebar-wrapper">
-        <div class="sidebar-heading text-center py-4 fs-1 fw-bold text-green">
-                <img src="/images/fca.png" alt="FCA Logo" style="height: 90px;padding-bottom: -60px;margin-top: -46px">
-
-        </div>
-        <div class="list-group list-group-flush">
-          <a href="/dashboard" class="list-group-item list-group-item-action bg-transparent">Dashboard</a>
-          <a href="/api/auth/students" class="list-group-item list-group-item-action bg-transparent">Students</a>
-          <a href="/lecturer" class="list-group-item list-group-item-action bg-transparent">Sessions</a>
-          <a href="/api/report/attendance" class="list-group-item list-group-item-action bg-transparent">Attendance</a>
-          <a href="/admin" class="list-group-item list-group-item-action bg-transparent">Admin</a>
-                    <button id="logoutBtn" class="btn btn-green">Logout</button>
-        </div>
+      <div class="toolbar">
+        <h4 style="color:var(--primary);margin:0;"><i class="fas fa-users me-2"></i> All Students (<%= students.length %>)</h4>
+        <span class="grow"></span>
+        <input class="search" id="searchBox" placeholder="Search by name or reg no…">
+        <a href="/api/auth/students/qr-sheet" target="_blank" class="btn btn-primary btn-sm"><i class="fas fa-print me-2"></i> Print QR Sheet</a>
+        <a href="/admin" class="btn btn-primary btn-sm">+ Add Student</a>
       </div>
-      <!-- Page Content -->
-      <div id="page-content-wrapper" style="margin-bottom: 100px;">
-        <nav class="navbar navbar-expand-lg border-bottom"
-          style="margin-top: -20px;margin-right: -20px;margin-left: -20px">
-          <div class="container-fluid">
-            <button class="btn" id="sidebarToggle"
-              style="background-color: rgb(17, 74, 17);color: white;width: 42px">☰</button>
-            <h4 style="color: green; font-weight: bold">FCA AttendancePulse</h4>
-            <span class="ms-auto">Logged in as: <strong id="navbarUser">Loading...</strong></span>
-          </div>
-        </nav>
 
-
-        <div class="container">
-          <table>
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Reg No</th>
-              </tr>
-            </thead>
-            <tbody>
-              <% students.forEach((s, index)=> { %>
-                <tr>
-                  <td>
-                    <%= index + 1 %>
-                  </td>
-                  <td>
-                    <%= s.name %>
-                  </td>
-                  <td>
-                    <%= s.email || '-' %>
-                  </td>
-                  <td>
-                    <a href="/api/auth/student/<%= s.id %>/qr" class="stdLink">
-                      <%= s.reg_no %>
-                    </a>
-                  </td>
-                </tr>
-                <% }) %>
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <table id="studentTable">
+        <thead>
+          <tr>
+            <th style="width:50px;">#</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Reg No</th>
+            <th>Kit Assets</th>
+            <th style="width:80px;"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% students.forEach((s, i) => { %>
+          <tr>
+            <td><%= i+1 %></td>
+            <td><strong><%= s.name %></strong></td>
+            <td><%= s.email || '—' %></td>
+            <td><a href="/api/auth/student/<%= s.id %>/qr" class="qr-link" target="_blank"><%= s.reg_no %></a></td>
+            <td>
+              <% if (s.pc_asset)      { %><span class="asset-badge"><i class="fas fa-laptop me-1"></i> <%= s.pc_asset %></span><% } %>
+              <% if (s.charger_asset) { %><span class="asset-badge"><i class="fas fa-bolt me-1"></i> <%= s.charger_asset %></span><% } %>
+              <% if (s.headset_asset) { %><span class="asset-badge"><i class="fas fa-headset me-1"></i> <%= s.headset_asset %></span><% } %>
+              <% if (!s.pc_asset && !s.charger_asset && !s.headset_asset) { %>
+                <span class="no-asset">No assets</span>
+              <% } %>
+              <details>
+                <summary>Edit</summary>
+                <form class="asset-form mt-1" method="POST" action="/api/auth/student/<%= s.id %>/assets">
+                  <input name="pc_asset"      placeholder="PC"      value="<%= s.pc_asset || '' %>">
+                  <input name="charger_asset" placeholder="Charger" value="<%= s.charger_asset || '' %>">
+                  <input name="headset_asset" placeholder="Headset" value="<%= s.headset_asset || '' %>">
+                  <button type="submit">Save</button>
+                </form>
+              </details>
+            </td>
+            <td>
+              <form method="POST" action="/api/auth/student/<%= s.id %>/delete"
+                    onsubmit="return confirm('Delete <%= s.name %>?');" style="display:inline;">
+                <button class="danger-btn" type="submit">Delete</button>
+              </form>
+            </td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
     </div>
-
-    <script src="/js/jquery.min.js"></script>
-    <script src="/js/bootstrap.bundle.min.js"></script>
-    <script src="/js/dashboard.js"></script>
-
-  </body>
-
-
-
+  </div>
+</div>
+<script src="/js/jquery.min.js"></script>
+<script src="/js/bootstrap.bundle.min.js"></script>
+<script src="/js/dashboard.js"></script>
+<script>
+  const searchBox = document.getElementById('searchBox');
+  searchBox.addEventListener('input', () => {
+    const q = searchBox.value.toLowerCase();
+    document.querySelectorAll('#studentTable tbody tr').forEach(tr => {
+      tr.style.display = tr.textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
+  });
+</script>
+</body>
 </html>

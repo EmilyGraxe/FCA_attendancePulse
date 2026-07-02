@@ -1,97 +1,110 @@
 <!DOCTYPE html>
 <html>
+<head>
+  <title>Admin — FCA</title>
+  <link rel="stylesheet" href="/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
 
-    <head>
-        <title>Admin Dashboard</title>
-        <link rel="stylesheet" href="css/styles.css">
-        <link rel="stylesheet" href="/css/bootstrap.min.css">
-        <link rel="stylesheet" href="/css/dashboard.css">
-        
-    </head>
+  <style>
+    .admin-card { padding:22px 24px; margin-bottom:22px; }
+    .admin-card h3 { color:var(--primary); font-size:1.05rem; margin:0 0 14px; font-weight:700; }
+    label { display:block; font-size:.78em; font-weight:600; color:#555;
+            margin-bottom:3px; margin-top:12px; text-transform:uppercase; letter-spacing:.04em; }
+    input[type=text],input[type=email],input[type=password],input[type=month],select {
+      width:100%; padding:9px 12px; border:1px solid #ccc; border-radius:8px;
+      font-size:.95em; }
+    .charger-toggle { display:flex; gap:14px; margin-top:6px; }
+    .charger-toggle label { display:flex; align-items:center; gap:6px;
+                            font-weight:normal; cursor:pointer; margin:0; text-transform:none; }
+    .charger-extra { margin-top:8px; display:none; }
+    button[type=submit] { margin-top:18px; padding:10px 24px; background:var(--primary);
+                          color:#fff; border:none; border-radius:8px; cursor:pointer;
+                          font-size:.95em; font-weight:600; }
+    button[type=submit]:hover { background:var(--primary-dark); }
+  </style>
+</head>
+<body>
+<div class="d-flex" id="wrapper">
+  <%- include('partials/sidebar') %>
+  <div id="page-content-wrapper">
+    <%- include('partials/topnav', { title: 'Admin' }) %>
 
-    <body>
-        <div class="d-flex" id="wrapper">
-            <!-- Sidebar -->
-            <div class="bg-white border-end" id="sidebar-wrapper">
-                <div class="sidebar-heading text-center py-4 fs-1 fw-bold text-green">
-                    <img src="/images/fca.png" alt="FCA Logo" style="height: 90px;padding-bottom: -60px;margin-top: -46px">
+    <div class="container-fluid" style="max-width:740px;">
+      <h4 style="color:var(--primary);"><i class="fas fa-user-cog me-2"></i> Admin Panel</h4>
 
-                </div>
-                <div class="list-group list-group-flush">
-                    <a href="/dashboard" class="list-group-item list-group-item-action bg-transparent">Dashboard</a>
-                    <a href="/api/auth/students"
-                        class="list-group-item list-group-item-action bg-transparent">Students</a>
-                    <a href="/lecturer" class="list-group-item list-group-item-action bg-transparent">Sessions</a>
-                    <a href="/api/report/attendance"
-                        class="list-group-item list-group-item-action bg-transparent">Attendance</a>
-                    <a href="/admin" class="list-group-item list-group-item-action bg-transparent">Admin</a>
-                    <button id="logoutBtn" class="btn btn-green">Logout</button>
+      <div class="card admin-card">
+        <h3><i class="fas fa-user-graduate me-2"> </i> Register Student</h3>
+        <form action="/api/auth/register-student" method="POST">
+          <label>Full Name *</label>
+          <input type="text" name="name" required>
+          <label>Email (optional)</label>
+          <input type="email" name="email">
 
-                </div>
-            </div>
+          <hr style="margin:18px 0 4px;">
+          <h6 style="color:#666;font-size:.78em;text-transform:uppercase;letter-spacing:.05em;">
+            Kit Assets
+          </h6>
 
-            <!-- Page Content -->
-            <div id="page-content-wrapper">
-                <nav class="navbar navbar-expand-lg border-bottom"
-                    style="margin-top: -20px;margin-right: -20px;margin-left: -20px">
-                    <div class="container-fluid">
-                        <button class="btn" id="sidebarToggle"
-                            style="background-color: rgb(17, 74, 17);color: white;width: 42px">☰</button>
-                        <h4 style="color: green; font-weight: bold">FCA AttendancePulse</h4>
-                        <span class="ms-auto">Logged in as: <strong id="navbarUser">Loading...</strong></span>
-                    </div>
-                </nav>
+          <label>  PC Asset Tag</label>
+          <input type="text" name="pc_asset" placeholder="e.g. PC-042">
 
+          <label> Has charger?</label>
+          <div class="charger-toggle">
+            <label><input type="radio" name="charger_asset" value="yes" id="chargerYes"> Yes</label>
+            <label><input type="radio" name="charger_asset" value="no" id="chargerNo" checked> No</label>
+          </div>
+          <div class="charger-extra" id="chargerTagBox">
+            <label>Charger Tag</label>
+            <input type="text" name="charger_tag" placeholder="e.g. CHG-017">
+          </div>
 
-                <div class="header" style="background-color: #f4fdf7;color: rgb(17, 74, 17);">Admin Dashboard</div>
+          <label>Headset Asset Tag</label>
+          <input type="text" name="headset_asset" placeholder="e.g. HS-008">
 
-                <div class="container" style="width:600px;margin-left:200px;">
+          <button type="submit">Register Student</button>
+        </form>
+      </div>
 
-                    <div class="card">
-                        <form action="/api/auth/register-student" method="POST">
-                            <h3>Register Student</h3>
-                            <input id="studentName" placeholder="Student Name" name="name" type="text">
-                            <br><br>
+      <div class="card admin-card">
+        <h3><i class="fas fa-user-tie me-2"> </i> Register Staff (Lecturer / Admin)</h3>
+        <form action="/api/auth/register-lecturer" method="POST">
+          <label>Full Name *</label>
+          <input type="text" name="name" required>
+          <label>Email *</label>
+          <input type="email" name="email" required>
+          <label>Password *</label>
+          <input type="password" name="password" required>
+          <label>Role</label>
+          <select name="role">
+            <option value="lecturer">Lecturer</option>
+            <option value="admin">Admin</option>
+          </select>
+          <button type="submit">Register Staff</button>
+        </form>
+      </div>
 
-                            <input type="email" placeholder="Student Email" name="email" id="studentEmail">
-                            <br><br>
-                            <button type="submit">Register Student</button>
-                        </form>
-                        <div id="qrPreview"></div>
-                    </div>
+      <div class="card admin-card">
+        <h3><i class="fas fa-clipboard-list me-2"> </i> Monthly Attendance Report</h3>
+        <label>Month</label>
+        <input type="month" id="monthInput" style="max-width:240px;">
+        <br>
+        <button id="downloadReportBtn" style="margin-top:14px;max-width:150px;height:40px;border-radius:8px;background:var(--primary);color:#fff;">Download Excel</button>
+      </div>
+    </div>
+  </div>
+</div>
 
-                    <div class="card">
-                        <form action="/api/auth/register-lecturer" method="POST">
-                            <h3>Register Lecturer</h3>
-                            <input id="lecName" placeholder="Lecturer Name" name="name">
-                            <br><br>
-                            <input id="lecEmail" placeholder="Email" name="email">
-                            <br><br>
-                            <input id="lecPass" type="password" placeholder="Password" name="password">
-                            <br><br>
-                            <button type="submit">Register Lecturer</button>
-                        </form>
-                    </div>
-
-                    <div class="card">
-                        <h3>Download Monthly Report</h3>
-                        <input type="month" id="monthInput">
-                        <button id="downloadReportBtn" style="width: 200px; height: 40px; margin-top: 10px;"
-                            data-month="" data-year="">
-                            Download Excel
-                        </button>
-                    </div>
-                    <div id="hiddenTableContainer" style="display:none;"></div>
-
-                </div>
-
-            </div>
-        </div>
-        <script src="/js/jquery.min.js"></script>
-        <script src="/js/xlsx.full.min.js"></script>
-        <script src="/js/bootstrap.bundle.min.js"></script>
-        <script src="/js/dashboard.js"></script>
-        <script src="js/admin.js"></script>
-    </body>
-
+<script src="/js/jquery.min.js"></script>
+<script src="/js/xlsx.full.min.js"></script>
+<script src="/js/bootstrap.bundle.min.js"></script>
+<script src="/js/dashboard.js"></script>
+<script src="/js/admin.js"></script>
+<script>
+  document.getElementById('chargerYes').addEventListener('change', () =>
+    document.getElementById('chargerTagBox').style.display = 'block');
+  document.getElementById('chargerNo').addEventListener('change', () =>
+    document.getElementById('chargerTagBox').style.display = 'none');
+</script>
+</body>
 </html>

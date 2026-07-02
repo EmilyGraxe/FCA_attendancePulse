@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Kit Sessions — FCA</title>
+  <link rel="stylesheet" href="/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+  <style>
+    .sessions-table { width:100%; border-collapse:collapse; margin-top:16px; }
+    .sessions-table th, td { padding:10px 14px; border-bottom:1px solid #eee; font-size:.9em; }
+    .sessions-table th { background:rgb(17,74,17); color:#fff; }
+    .badge-active { background:#28a745; color:#fff; padding:3px 10px; border-radius:12px; font-size:.8em; }
+    .badge-closed { background:#6c757d; color:#fff; padding:3px 10px; border-radius:12px; font-size:.8em; }
+    .close-btn { padding:4px 12px; background:#dc3545; color:#fff; border:none;
+                 border-radius:6px; cursor:pointer; font-size:.82em; }
+  </style>
+</head>
+<body>
+<div class="d-flex" id="wrapper">
+  <%- include('partials/sidebar') %>
+  <div id="page-content-wrapper">
+    <%- include('partials/topnav', { title: 'Kit Sessions' }) %>
+
+    <div class="container-fluid mt-4" style="max-width:900px;">
+      <h4 style="color:rgb(17,74,17);"><i class="fas fa-box me-2"></i> Kit Sessions</h4>
+
+      <div class="card p-3 mb-4">
+  <h5>Start New Kit Session</h5>
+
+  <div class="d-flex justify-content-between mt-3">
+    <button id="startKitSession" class="btn"
+      style="background:rgb(17,74,17);color:#fff;padding:8px 24px;width:20%;">
+      <i class="fas fa-play me-2"></i> Start Kit Session
+    </button>
+
+    <a href="/kit-scan" class="btn"
+      style="background:rgb(17,74,17);color:#fff;padding:8px 24px;width:20%;">
+      <i class="fas fa-list me-2"></i> Go to Scanner
+    </a>
+  </div>
+</div>
+
+      <table class="sessions-table">
+        <thead>
+          <tr>
+            <th>#</th><th>Label</th><th>Started</th><th>Closed</th>
+            <th>Scanned</th><th>Returned</th><th>Status</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="sessionsBody">
+
+
+          
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<script src="/js/jquery.min.js"></script>
+<script src="/js/bootstrap.bundle.min.js"></script>
+<script src="/js/kit.js"></script>
+</body>
+</html>
