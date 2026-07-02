@@ -41,36 +41,50 @@ router.post("/logout", (req, res) => res.json({ message: "Logged out" }));
 router.post("/register-student", async (req, res) => {
   try {
     const { name, email, pc_asset, charger_asset, headset_asset } = req.body;
-    if (!name) return res.status(400).json({ message: "Student name required" });
+
+    if (!name)
+      return res.status(400).json({ message: "Student name required" });
 
     const year = new Date().getFullYear();
     const qr_token = crypto.randomBytes(20).toString("hex");
 
-    const insert = await db.query(
+    // Get the next student number
+    const { rows } = await db.query(
+      "SELECT nextval('student_no_seq') AS student_no"
+    );
+
+    const studentNo = rows[0].student_no;
+
+    // Create registration number
+    const reg_no = `FCA_DICE_${year}-${String(studentNo).padStart(2, "0")}`;
+
+    // Insert student
+    await db.query(
       `INSERT INTO users
-         (name, email, role, reg_no, qr_token, pc_asset, charger_asset, headset_asset)
-       VALUES ($1, $2, 'student', 'pending', $3, $4, $5, $6)
-       RETURNING id`,
+        (name, email, role, student_no, reg_no, qr_token,
+         pc_asset, charger_asset, headset_asset)
+       VALUES ($1, $2, 'student', $3, $4, $5, $6, $7, $8)`,
       [
         name.trim(),
         email?.trim() || null,
+        studentNo,
+        reg_no,
         qr_token,
         pc_asset?.trim() || null,
         charger_asset === "yes"
           ? req.body.charger_tag?.trim() || "yes"
           : null,
         headset_asset?.trim() || null,
-      ],
+      ]
     );
-    const studentId = insert.rows[0].id;
-    const reg_no = `FCA_DICE_${year}-${studentId}`;
-    await db.query(`UPDATE users SET reg_no=$1 WHERE id=$2`, [reg_no, studentId]);
 
     res.redirect("/students");
   } catch (err) {
     console.error(err);
+
     if (err.code === "23505")
       return res.status(400).json({ message: "Email already exists" });
+
     res.status(500).json({ message: "Server error" });
   }
 });
