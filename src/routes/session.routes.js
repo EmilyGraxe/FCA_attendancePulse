@@ -38,35 +38,70 @@ router.post("/start", auth, role(["lecturer", "admin"]), async (req, res) => {
 
 router.post("/close", auth, role(["lecturer", "admin"]), async (req, res) => {
   const today = new Date().toLocaleDateString("en-CA");
+
   try {
+    // Find the active session
     const session = await db.query(
-      "SELECT * FROM sessions WHERE active=true AND lecturer_id=$1 AND session_date=$2",
-      [req.user.id, today],
+      `SELECT * FROM sessions
+       WHERE active = true
+         AND lecturer_id = $1
+         AND session_date = $2`,
+      [req.user.id, today]
     );
-    if (!session.rows.length)
+
+    if (!session.rows.length) {
       return res.status(400).json({ message: "No active session" });
+    }
 
     const sessionId = session.rows[0].id;
-    await db.query("UPDATE sessions SET active=false, end_time=$1 WHERE id=$2", [
-      new Date(),
-      sessionId,
-    ]);
 
-    // Mark every student not already marked Present as Absent ('A')
-    const result = await db.query(
-      `INSERT INTO attendance (session_id, student_id, status)
-       SELECT $1, u.id, 'A'
-       FROM users u
-       WHERE u.role = 'student'
-         AND u.id NOT IN (SELECT student_id FROM attendance WHERE session_id = $1)
-       ON CONFLICT (session_id, student_id) DO NOTHING
-       RETURNING student_id`,
-      [sessionId],
+    // Close the session
+    await db.query(
+      `UPDATE sessions
+       SET active = false,
+           end_time = NOW()
+       WHERE id = $1`,
+      [sessionId]
     );
 
-    res.json({ message: `Session closed. ${result.rowCount} student(s) marked Absent.` });
+    // Mark absent ONLY students who have NEVER been present today
+    const result = await db.query(
+      `
+      INSERT INTO attendance (session_id, student_id, status)
+      SELECT
+          $1,
+          u.id,
+          'A'
+      FROM users u
+      WHERE u.role = 'student'
+        -- Don't insert if already recorded for THIS session
+        AND NOT EXISTS (
+            SELECT 1
+            FROM attendance a
+            WHERE a.session_id = $1
+              AND a.student_id = u.id
+        )
+        -- Don't insert if the student has already been Present today
+        AND NOT EXISTS (
+            SELECT 1
+            FROM attendance a
+            JOIN sessions s
+              ON s.id = a.session_id
+            WHERE a.student_id = u.id
+              AND s.session_date = $2
+              AND a.status = 'P'
+        )
+      RETURNING student_id
+      `,
+      [sessionId, today]
+    );
+
+    res.json({
+      message: `Session closed. ${result.rowCount} student(s) marked Absent.`,
+    });
+
   } catch (err) {
-    console.error(err);
+    console.error("Error closing session:", err);
     res.status(500).json({ message: "Server error closing session" });
   }
 });
