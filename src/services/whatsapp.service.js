@@ -1,28 +1,32 @@
 const fetch = require("node-fetch");
 
 async function sendMessage(to, text) {
-  const url = `https://graph.facebook.com/v19.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
+  const accountSid = process.env.TWILIO_ACCOUNT_SID;
+  const authToken  = process.env.TWILIO_AUTH_TOKEN;
+  const from       = `whatsapp:${process.env.TWILIO_WHATSAPP_NUMBER}`;
+  const toNumber   = `whatsapp:+${to}`;
+
+  const url = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
+
+  const body = new URLSearchParams({
+    From: from,
+    To:   toNumber,
+    Body: text,
+  });
 
   const resp = await fetch(url, {
     method: "POST",
     headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${process.env.WHATSAPP_TOKEN}`,
+      "Authorization": "Basic " + Buffer.from(`${accountSid}:${authToken}`).toString("base64"),
+      "Content-Type":  "application/x-www-form-urlencoded",
     },
-    body: JSON.stringify({
-      messaging_product: "whatsapp",
-      to: to,
-      type: "text",
-      text: { body: text },
-    }),
+    body,
   });
 
   const data = await resp.json();
-  console.log("📤 WhatsApp API response:", JSON.stringify(data));
+  console.log("📤 Twilio response:", JSON.stringify(data));
 
-  if (!resp.ok) {
-    throw new Error(`WhatsApp send failed: ${JSON.stringify(data)}`);
-  }
+  if (!resp.ok) throw new Error(`Twilio error: ${JSON.stringify(data)}`);
   return data;
 }
 
