@@ -11,6 +11,48 @@ const gemini   = require("../services/gemini.service");
 const wa       = require("../services/whatsapp.service");
 const memory   = require("../services/memory.service");
 
+
+router.post("/", async (req, res) => {
+  res.sendStatus(200);
+
+  try {
+    console.log("📨 RAW BODY:", JSON.stringify(req.body, null, 2));
+
+    const entry  = req.body?.entry?.[0];
+    const change = entry?.changes?.[0];
+    const value  = change?.value;
+
+    console.log("📋 VALUE:", JSON.stringify(value, null, 2));
+
+    if (!value?.messages?.length) {
+      console.log("⚠️ No messages array — probably a status update, ignoring");
+      return;
+    }
+
+    const msg  = value.messages[0];
+    const from = msg.from;
+    const type = msg.type;
+    const text = msg?.text?.body;
+
+    console.log(`📱 FROM: ${from}`);
+    console.log(`📝 TYPE: ${type}`);
+    console.log(`💬 TEXT: ${text}`);
+    console.log(`🔒 ALLOWED: ${process.env.ALLOWED_WHATSAPP_NUMBERS}`);
+    console.log(`✅ MATCH: ${(process.env.ALLOWED_WHATSAPP_NUMBERS || "").split(",").map(n => n.trim()).includes(from)}`);
+    console.log(`🔑 TOKEN SET: ${!!process.env.WHATSAPP_TOKEN}`);
+    console.log(`📞 PHONE ID SET: ${!!process.env.WHATSAPP_PHONE_NUMBER_ID}`);
+    console.log(`🤖 GEMINI SET: ${!!process.env.GEMINI_API_KEY}`);
+
+    // Try sending a simple hardcoded reply first (no Gemini involved)
+    console.log("📤 Attempting to send reply...");
+    await wa.sendMessage(from, "🤖 Test reply — bot is alive!");
+    console.log("✅ Reply sent successfully!");
+
+  } catch (err) {
+    console.error("❌ ERROR:", err.message);
+    console.error("❌ STACK:", err.stack);
+  }
+});
 // ── Whitelist: only these numbers can use the bot ─────────────────────────────
 // Add your number and any co-admins. Format: country code + number, no +
 // Uganda example: 256700123456
@@ -145,5 +187,6 @@ router.post("/", async (req, res) => {
     // Don't crash — Meta needs the 200 we already sent
   }
 });
+
 
 module.exports = router;
