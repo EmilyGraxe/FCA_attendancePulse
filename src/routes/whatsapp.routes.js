@@ -12,47 +12,7 @@ const wa       = require("../services/whatsapp.service");
 const memory   = require("../services/memory.service");
 
 
-router.post("/", async (req, res) => {
-  res.sendStatus(200);
 
-  try {
-    console.log("📨 RAW BODY:", JSON.stringify(req.body, null, 2));
-
-    const entry  = req.body?.entry?.[0];
-    const change = entry?.changes?.[0];
-    const value  = change?.value;
-
-    console.log("📋 VALUE:", JSON.stringify(value, null, 2));
-
-    if (!value?.messages?.length) {
-      console.log("⚠️ No messages array — probably a status update, ignoring");
-      return;
-    }
-
-    const msg  = value.messages[0];
-    const from = msg.from;
-    const type = msg.type;
-    const text = msg?.text?.body;
-
-    console.log(`📱 FROM: ${from}`);
-    console.log(`📝 TYPE: ${type}`);
-    console.log(`💬 TEXT: ${text}`);
-    console.log(`🔒 ALLOWED: ${process.env.ALLOWED_WHATSAPP_NUMBERS}`);
-    console.log(`✅ MATCH: ${(process.env.ALLOWED_WHATSAPP_NUMBERS || "").split(",").map(n => n.trim()).includes(from)}`);
-    console.log(`🔑 TOKEN SET: ${!!process.env.WHATSAPP_TOKEN}`);
-    console.log(`📞 PHONE ID SET: ${!!process.env.WHATSAPP_PHONE_NUMBER_ID}`);
-    console.log(`🤖 GEMINI SET: ${!!process.env.GEMINI_API_KEY}`);
-
-    // Try sending a simple hardcoded reply first (no Gemini involved)
-    console.log("📤 Attempting to send reply...");
-    await wa.sendMessage(from, "🤖 Test reply — bot is alive!");
-    console.log("✅ Reply sent successfully!");
-
-  } catch (err) {
-    console.error("❌ ERROR:", err.message);
-    console.error("❌ STACK:", err.stack);
-  }
-});
 // ── Whitelist: only these numbers can use the bot ─────────────────────────────
 // Add your number and any co-admins. Format: country code + number, no +
 // Uganda example: 256700123456
@@ -96,96 +56,12 @@ router.get("/", (req, res) => {
 
 // ── POST /webhook/whatsapp — incoming messages ────────────────────────────────
 router.post("/", async (req, res) => {
-  // Always acknowledge immediately — Meta resends if no 200 within 20s
+  // Always respond 200 first
   res.sendStatus(200);
-
-  try {
-    const entry = req.body?.entry?.[0];
-    const change = entry?.changes?.[0];
-    const value  = change?.value;
-
-    // Ignore status updates (delivered/read receipts)
-    if (!value?.messages?.length) return;
-
-    const msg  = value.messages[0];
-    const from = msg.from; // sender's phone number
-    const type = msg.type;
-
-    // Only handle text messages
-    if (type !== "text") {
-      await wa.sendMessage(from, "⚠️ I can only understand text messages. Please type your question.");
-      return;
-    }
-
-    const text = msg.text.body.trim();
-
-    // ── Security check ──────────────────────────────────────────────────────
-    if (ALLOWED_NUMBERS.length && !ALLOWED_NUMBERS.includes(from)) {
-      console.warn(`Blocked unauthorised number: ${from}`);
-      await wa.sendMessage(from, "⛔ You are not authorised to use this system.");
-      return;
-    }
-
-    console.log(`📱 Message from ${from}: ${text}`);
-
-    // ── Special commands ────────────────────────────────────────────────────
-    if (/^(help|\?|hi|hello|start)$/i.test(text)) {
-      await wa.sendMessage(from, HELP_TEXT);
-      return;
-    }
-
-    if (/^clear$/i.test(text)) {
-      memory.clearHistory(from);
-      await wa.sendMessage(from, "🗑️ Conversation memory cleared. Ask me anything!");
-      return;
-    }
-
-    // ── Typing indicator ────────────────────────────────────────────────────
-    await wa.sendMessage(from, "⏳ Looking that up...");
-
-    // ── Build question with conversation context ─────────────────────────────
-    const context  = memory.buildContext(from);
-    const fullQuestion = context
-      ? `${context}Current question: ${text}`
-      : text;
-
-    // ── Generate SQL ─────────────────────────────────────────────────────────
-    let sql;
-    try {
-      sql = await gemini.generateSQL(fullQuestion);
-      console.log(`🔍 Generated SQL: ${sql}`);
-    } catch (err) {
-      console.error("SQL generation error:", err.message);
-      await wa.sendMessage(from,
-        "❓ I couldn't understand that question. Try rephrasing it.\n\nType *help* for examples."
-      );
-      return;
-    }
-
-    // ── Run query ────────────────────────────────────────────────────────────
-    let rows;
-    try {
-      const result = await db.query(sql);
-      rows = result.rows;
-    } catch (err) {
-      console.error("DB query error:", err.message);
-      await wa.sendMessage(from,
-        `⚠️ Database error running that query.\n\nError: ${err.message.slice(0, 200)}`
-      );
-      return;
-    }
-
-    // ── Format and send answer ───────────────────────────────────────────────
-    const answer = await gemini.formatAnswer(text, rows);
-    await wa.sendMessage(from, answer);
-
-    // ── Save to memory ───────────────────────────────────────────────────────
-    memory.addExchange(from, text, answer);
-
-  } catch (err) {
-    console.error("Webhook handler error:", err);
-    // Don't crash — Meta needs the 200 we already sent
-  }
+  
+  // Log everything
+  console.log("=== WHATSAPP POST HIT ===");
+  console.log("BODY:", JSON.stringify(req.body, null, 2));
 });
 
 
