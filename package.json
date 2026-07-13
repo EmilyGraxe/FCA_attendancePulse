@@ -10,6 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.6",
     "dotenv": "^17.2.4",
@@ -23,6 +24,7 @@
     "node-fetch": "^3.3.2",
     "pg": "^8.18.0",
     "qrcode": "^1.5.4",
+    "twilio": "^6.0.2",
     "uuid": "^13.0.0"
   },
   "repository": {

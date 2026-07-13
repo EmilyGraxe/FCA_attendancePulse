@@ -1,18 +1,8 @@
-/**
- * gemini.service.js
- * Handles all AI calls to Google Gemini.
- * Two jobs:
- *   1. generateSQL  — turn plain English into a safe PostgreSQL query
- *   2. formatAnswer — turn raw DB rows into a friendly WhatsApp message
- */
-//gdwgdwgdwfwd
-const fetch = require("node-fetch");
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_URL =
-  `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-// ── DB schema Gemini needs to know about ─────────────────────────────────────
 const DB_SCHEMA = `
 You are a PostgreSQL expert assistant for FCA AttendancePulse — a student
 attendance and laptop/kit asset tracking system at a Ugandan college.
@@ -20,16 +10,16 @@ attendance and laptop/kit asset tracking system at a Ugandan college.
 DATABASE TABLES:
 
 users (
-  id          SERIAL PRIMARY KEY,
-  name        VARCHAR,
-  email       VARCHAR,
-  reg_no      VARCHAR,           -- e.g. FCA_DICE_2025-12
-  role        VARCHAR,           -- 'student' | 'lecturer' | 'admin'
-  phone       VARCHAR,
-  pc_asset    VARCHAR,           -- PC number assigned to student
+  id            SERIAL PRIMARY KEY,
+  name          VARCHAR,
+  email         VARCHAR,
+  reg_no        VARCHAR,
+  role          VARCHAR,        -- 'student' | 'lecturer' | 'admin'
+  phone         VARCHAR,
+  pc_asset      VARCHAR,        -- PC number assigned to student
   charger_asset VARCHAR,
   headset_asset VARCHAR,
-  qr_token    VARCHAR
+  qr_token      VARCHAR
 )
 
 sessions (
@@ -46,7 +36,7 @@ attendance (
   id         SERIAL PRIMARY KEY,
   session_id INTEGER REFERENCES sessions(id),
   student_id INTEGER REFERENCES users(id),
-  status     VARCHAR   -- 'P' = Present, 'O' = Absent
+  status     VARCHAR    -- 'P' = Present, 'O' = Absent
 )
 
 kit_sessions (
@@ -54,7 +44,7 @@ kit_sessions (
   label       VARCHAR,
   lecturer_id INTEGER REFERENCES users(id),
   started_at  TIMESTAMP,
-  closed_at   TIMESTAMP     -- NULL means still open
+  closed_at   TIMESTAMP   -- NULL means still open
 )
 
 checkouts (
@@ -62,97 +52,69 @@ checkouts (
   kit_session_id INTEGER REFERENCES kit_sessions(id),
   student_id     INTEGER REFERENCES users(id),
   checked_out_at TIMESTAMP,
-  returned_at    TIMESTAMP  -- NULL means NOT yet returned
+  returned_at    TIMESTAMP   -- NULL means NOT yet returned
 )
 
 loans (
   id             SERIAL PRIMARY KEY,
   kit_session_id INTEGER REFERENCES kit_sessions(id),
-  owner_id       INTEGER REFERENCES users(id),  -- whose PC it is
-  borrower_id    INTEGER REFERENCES users(id),  -- actual user (if scanned)
-  item_type      VARCHAR,   -- 'pc' | 'charger' | 'headset'
+  owner_id       INTEGER REFERENCES users(id),
+  borrower_id    INTEGER REFERENCES users(id),
+  item_type      VARCHAR,
   pc_number      VARCHAR,
   borrower_name  VARCHAR,
   loaned_at      TIMESTAMP,
-  returned_at    TIMESTAMP  -- NULL means still on loan
+  returned_at    TIMESTAMP   -- NULL means still on loan
 )
 
-TODAY = CURRENT_DATE  (Uganda time, UTC+3)
+TODAY = CURRENT_DATE (Uganda time UTC+3)
 
 RULES:
 - ONLY generate SELECT statements. NEVER INSERT, UPDATE, DELETE, DROP, ALTER.
-- Return ONLY the raw SQL query. No explanation. No markdown. No semicolons at end.
-- Use table aliases. Use ILIKE for name searches (case-insensitive).
-- Limit results to 50 rows unless user asks for all.
+- Return ONLY the raw SQL. No explanation. No markdown. No backticks. No semicolons.
+- Use ILIKE for name searches (case-insensitive).
+- Limit to 50 rows unless user asks for all.
 - For "today" use CURRENT_DATE.
 - For "this week" use date_trunc('week', CURRENT_DATE).
 - For "this month" use date_trunc('month', CURRENT_DATE).
 - For "absent" filter status = 'O', for "present" filter status = 'P'.
 - For "not returned" filter returned_at IS NULL.
-- For "overdue" / "not returned" on checkouts also check kit_sessions.closed_at IS NOT NULL.
 `;
 
-// ── Call Gemini ────────────────────────────────────────────────────────────────
-async function callGemini(systemText, userText) {
-  const body = {
-    contents: [
-      {
-        role: "user",
-        parts: [{ text: `${systemText}\n\nUser question: ${userText}` }],
-      },
-    ],
-    generationConfig: { temperature: 0.1, maxOutputTokens: 1024 },
-  };
-
-  const resp = await fetch(GEMINI_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-
-  if (!resp.ok) {
-    const err = await resp.text();
-    throw new Error(`Gemini API error ${resp.status}: ${err}`);
-  }
-
-  const data = await resp.json();
-  return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
-}
-
-// ── 1. Generate SQL from natural language ─────────────────────────────────────
 async function generateSQL(question) {
-  const sql = await callGemini(DB_SCHEMA, question);
-  // Safety: strip any non-SELECT that slips through
-  const clean = sql.replace(/```sql|```/gi, "").trim();
-  if (!/^\s*SELECT/i.test(clean)) {
-    throw new Error("AI returned a non-SELECT query — blocked for safety.");
+  const prompt = `${DB_SCHEMA}\n\nUser question: ${question}\n\nSQL query:`;
+  const result = await model.generateContent(prompt);
+  const sql    = result.response.text().trim().replace(/```sql|```/gi, "").trim();
+
+  if (!/^\s*SELECT/i.test(sql)) {
+    throw new Error("Non-SELECT query blocked for safety");
   }
-  return clean;
+  return sql;
 }
 
-// ── 2. Format DB results into a WhatsApp-friendly message ─────────────────────
 async function formatAnswer(question, rows) {
   if (!rows || rows.length === 0) {
     return "✅ No records found for that query.";
   }
 
-  const formatPrompt = `
-You are a friendly assistant replying on WhatsApp for FCA AttendancePulse.
+  const prompt = `
+You are a friendly WhatsApp assistant for FCA AttendancePulse, a school system in Uganda.
 The user asked: "${question}"
 The database returned ${rows.length} row(s):
 ${JSON.stringify(rows.slice(0, 30), null, 2)}
 
-Format a clear, concise WhatsApp reply:
+Format a clear WhatsApp reply:
 - Use emoji where helpful (✅ ❌ 📋 👤 💻 📅)
-- Use plain text, no markdown bold (**) — WhatsApp uses *asterisks* for bold
+- Use *asterisks* for bold (WhatsApp style)
 - List items with a dash or number
-- If more than 10 results, summarise and say "showing first 10 of ${rows.length}"
-- End with a one-line summary stat if useful
-- Keep it under 1500 characters total
-- Do NOT say "Based on the data" — just give the answer directly
+- If more than 10 results, show first 10 and say "showing 10 of ${rows.length}"
+- End with a short summary stat if useful
+- Keep under 1500 characters
+- Reply directly, do not say "Based on the data"
 `;
 
-  return await callGemini(formatPrompt, "Format this response now.");
+  const result = await model.generateContent(prompt);
+  return result.response.text().trim();
 }
 
 module.exports = { generateSQL, formatAnswer };
