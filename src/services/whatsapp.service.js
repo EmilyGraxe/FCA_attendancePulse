@@ -1,44 +1,52 @@
 /**
- * whatsapp.service.js
- * Sends messages back to WhatsApp via Meta Cloud API.
+ * whatsapp.service.js — Twilio WhatsApp REST client
+ * Sends outbound messages via Twilio's Messages API.
  */
 
 const fetch = require("node-fetch");
 
-const PHONE_NUMBER_ID  = process.env.WHATSAPP_PHONE_NUMBER_ID;
-const WHATSAPP_TOKEN   = process.env.WHATSAPP_TOKEN;
-const META_API_VERSION = "v19.0";
+const ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID;
+const AUTH_TOKEN  = process.env.TWILIO_AUTH_TOKEN;
+// Sandbox default: whatsapp:+14155238886
+const FROM_NUMBER = process.env.TWILIO_WHATSAPP_FROM || "whatsapp:+14155238886";
 
 async function sendMessage(to, text) {
-  // WhatsApp requires the number without + and with country code
-  // e.g. 256700123456  (Uganda: 256 prefix)
-  const cleanNumber = to.replace(/^\+/, "");
+  if (!ACCOUNT_SID || !AUTH_TOKEN) {
+    console.error("Missing TWILIO_ACCOUNT_SID or TWILIO_AUTH_TOKEN");
+    return;
+  }
 
-  const url = `https://graph.facebook.com/${META_API_VERSION}/${PHONE_NUMBER_ID}/messages`;
+  // Normalise: accept "256700..." or "+256700..." or "whatsapp:+256700..."
+  let clean = to.toString().replace(/^whatsapp:/i, "").replace(/^\+/, "");
+  const toAddr = `whatsapp:+${clean}`;
 
-  const body = {
-    messaging_product: "whatsapp",
-    to: cleanNumber,
-    type: "text",
-    text: { body: text },
-  };
+  const url = `https://api.twilio.com/2010-04-01/Accounts/${ACCOUNT_SID}/Messages.json`;
+  const auth = Buffer.from(`${ACCOUNT_SID}:${AUTH_TOKEN}`).toString("base64");
+
+  const form = new URLSearchParams({
+    From: FROM_NUMBER,
+    To:   toAddr,
+    Body: text,
+  });
 
   const resp = await fetch(url, {
     method: "POST",
     headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${WHATSAPP_TOKEN}`,
+      Authorization: `Basic ${auth}`,
+      "Content-Type": "application/x-www-form-urlencoded",
     },
-    body: JSON.stringify(body),
+    body: form.toString(),
   });
 
   if (!resp.ok) {
-    const err = await resp.json();
-    console.error("WhatsApp send error:", JSON.stringify(err));
-    throw new Error(`WhatsApp API error: ${resp.status}`);
+    const err = await resp.text();
+    console.error(`Twilio send error [${resp.status}]:`, err);
+    throw new Error(`Twilio API ${resp.status}`);
   }
 
-  return await resp.json();
+  const data = await resp.json();
+  console.log(`✅ Sent (sid=${data.sid}) to ${toAddr}`);
+  return data;
 }
 
 module.exports = { sendMessage };
