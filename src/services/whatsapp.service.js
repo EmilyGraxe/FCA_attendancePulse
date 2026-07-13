@@ -23,6 +23,8 @@ async function sendMessage(to, text) {
   const toAddr = `whatsapp:+${clean}`;
 
   try {
+    console.log("FROM:", FROM_NUMBER);
+    console.log("TO:", toAddr);
     const message = await client.messages.create({
       from: FROM_NUMBER,
       to: toAddr,
