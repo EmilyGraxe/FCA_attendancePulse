@@ -20,11 +20,11 @@
     "helmet": "^8.1.0",
     "html5-qrcode": "^2.3.8",
     "jsonwebtoken": "^9.0.3",
+    "node-fetch": "^3.3.2",
     "pg": "^8.18.0",
     "qrcode": "^1.5.4",
     "uuid": "^13.0.0"
   },
-  "devDependencies": {},
   "repository": {
     "type": "git",
     "url": "git+https://github.com/EmilyGraxe/FCA_attendancePulse.git"
