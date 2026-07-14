@@ -3,35 +3,38 @@ require("dotenv").config();
 
 const isProduction = process.env.NODE_ENV === "production";
 
-// Use DATABASE_URL_PROD in production, DATABASE_URL locally
 const connectionString = isProduction
   ? process.env.DATABASE_URL_PROD
   : process.env.DATABASE_URL;
 
 if (!connectionString) {
-  console.error("❌ DATABASE_URL is not defined in environment variables!");
+  console.error("❌ Database URL is missing");
   process.exit(1);
 }
 
-// Create pool
 const pool = new Pool({
   connectionString,
   ssl: isProduction
-    ? {
-        rejectUnauthorized: false, // Supabase allows this for Node.js clients
-      }
+    ? { rejectUnauthorized: false }
     : false,
-  max: 50, // can increase for heavy scanning
+  max: 50,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 5000, // 5 seconds
+  connectionTimeoutMillis: 5000,
 });
 
-// Test connection immediately
-pool
-  .catch((err) => {
+pool.on("error", (err) => {
+  console.error("Unexpected DB pool error:", err);
+});
+
+pool.connect()
+  .then(client => {
+    console.log("✅ Connected to PostgreSQL");
+    client.release();
+  })
+  .catch(err => {
     console.error("❌ Failed to connect to database");
     console.error(err.message || err);
-    process.exit(1); // stop server if DB is unreachable
+    process.exit(1);
   });
 
 module.exports = pool;
