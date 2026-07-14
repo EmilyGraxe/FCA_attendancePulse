@@ -70,7 +70,6 @@ loans (
   id             SERIAL PRIMARY KEY,
   kit_session_id INTEGER REFERENCES kit_sessions(id),
   owner_id       INTEGER REFERENCES users(id),  -- whose PC it is
-  borrower_id    INTEGER REFERENCES users(id),  -- actual user (if scanned)
   item_type      VARCHAR,   -- 'pc' | 'charger' | 'headset'
   pc_number      VARCHAR,
   borrower_name  VARCHAR,
