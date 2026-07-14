@@ -25,11 +25,12 @@ users (
   email       VARCHAR,
   reg_no      VARCHAR,           -- e.g. FCA_DICE_2025-12
   role        VARCHAR,           -- 'student' | 'lecturer' | 'admin'
-  phone       VARCHAR,
+  created_at  TIMESTAMP,
   pc_asset    VARCHAR,           -- PC number assigned to student
   charger_asset VARCHAR,
   headset_asset VARCHAR,
-  qr_token    VARCHAR
+  qr_token    VARCHAR,
+  student_no  VARCHAR
 )
 
 sessions (

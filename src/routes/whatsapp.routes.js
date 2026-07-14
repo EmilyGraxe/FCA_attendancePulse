@@ -99,7 +99,7 @@ router.post("/", async (req, res) => {
       const result = await db.query(sql);
       rows = result.rows;
     } catch (err) {
-      console.error("DB error:", err.message);
+      console.error("DB error:", err);
       await wa.sendMessage(from, `⚠️ Database error.\n\n${err.message.slice(0, 200)}`);
       return;
     }
