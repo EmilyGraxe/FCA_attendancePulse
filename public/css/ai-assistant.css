@@ -1,48 +1,326 @@
-/* FCA AI Assistant — floating chat widget */
-.fca-ai-fab{position:fixed;right:20px;bottom:20px;width:56px;height:56px;border-radius:50%;
-  background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;border:0;display:flex;
-  align-items:center;justify-content:center;font-size:24px;cursor:pointer;
-  box-shadow:0 8px 24px rgba(79,70,229,.35);z-index:9998;transition:transform .15s}
-.fca-ai-fab:hover{transform:scale(1.05)}
-.fca-ai-panel{position:fixed;right:20px;bottom:88px;width:380px;max-width:calc(100vw - 24px);
-  height:560px;max-height:calc(100vh - 108px);background:#fff;color:#1f2937;border-radius:16px;
-  box-shadow:0 20px 60px rgba(0,0,0,.25);display:none;flex-direction:column;overflow:hidden;
-  z-index:9999;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
-.fca-ai-panel.open{display:flex}
-.fca-ai-head{padding:12px 14px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;
-  display:flex;align-items:center;justify-content:space-between}
-.fca-ai-head h4{margin:0;font-size:15px;font-weight:600}
-.fca-ai-head small{opacity:.8;font-size:11px;display:block}
-.fca-ai-head button{background:transparent;border:0;color:#fff;font-size:18px;cursor:pointer;
-  margin-left:6px;padding:4px 8px;border-radius:6px}
-.fca-ai-head button:hover{background:rgba(255,255,255,.15)}
-.fca-ai-body{flex:1;overflow-y:auto;padding:12px;background:#f8fafc;display:flex;
-  flex-direction:column;gap:10px}
-.fca-ai-msg{max-width:85%;padding:8px 12px;border-radius:12px;font-size:14px;line-height:1.4;
-  white-space:pre-wrap;word-wrap:break-word}
-.fca-ai-msg.user{align-self:flex-end;background:#4f46e5;color:#fff;border-bottom-right-radius:4px}
-.fca-ai-msg.bot{align-self:flex-start;background:#fff;border:1px solid #e5e7eb;
-  border-bottom-left-radius:4px}
-.fca-ai-msg .src{display:block;margin-top:4px;font-size:10px;opacity:.6;text-transform:uppercase;
-  letter-spacing:.05em}
-.fca-ai-suggestions{display:flex;flex-wrap:wrap;gap:6px;padding:8px 12px;background:#fff;
-  border-top:1px solid #e5e7eb}
-.fca-ai-suggestions button{background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe;
-  border-radius:999px;padding:4px 10px;font-size:12px;cursor:pointer}
-.fca-ai-suggestions button:hover{background:#e0e7ff}
-.fca-ai-form{display:flex;gap:6px;padding:10px;border-top:1px solid #e5e7eb;background:#fff}
-.fca-ai-form input{flex:1;border:1px solid #d1d5db;border-radius:10px;padding:8px 12px;
-  font-size:14px;outline:none}
-.fca-ai-form input:focus{border-color:#4f46e5;box-shadow:0 0 0 3px rgba(79,70,229,.15)}
-.fca-ai-form button{background:#4f46e5;color:#fff;border:0;border-radius:10px;padding:0 14px;
-  cursor:pointer;font-weight:600}
-.fca-ai-form button:disabled{opacity:.5;cursor:not-allowed}
-.fca-ai-typing{align-self:flex-start;color:#6b7280;font-size:13px;padding:4px 8px;font-style:italic}
+/* FCA AI Assistant — Matches FCA Theme */
+
+.fca-ai-fab{
+    position:fixed;
+    right:20px;
+    bottom:20px;
+    width:56px;
+    height:56px;
+    border-radius:50%;
+    border:none;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:24px;
+    color:#fff;
+    background:var(--primary);
+    box-shadow:var(--shadow);
+    transition:.2s ease;
+    z-index:9998;
+}
+
+.fca-ai-fab:hover{
+    background:var(--primary-dark);
+    transform:scale(1.05);
+}
+
+.fca-ai-panel{
+    position:fixed;
+    right:20px;
+    bottom:88px;
+    width:380px;
+    max-width:calc(100vw - 24px);
+    height:560px;
+    max-height:calc(100vh - 108px);
+
+    display:none;
+    flex-direction:column;
+    overflow:hidden;
+
+    background:var(--surface);
+    color:var(--text);
+
+    border:1px solid var(--border);
+    border-radius:16px;
+
+    box-shadow:var(--shadow);
+    font-family:'Inter',sans-serif;
+
+    z-index:9999;
+}
+
+.fca-ai-panel.open{
+    display:flex;
+}
+
+/* Header */
+
+.fca-ai-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+
+    padding:14px 16px;
+
+    background:var(--primary);
+    color:#fff;
+}
+
+.fca-ai-head h4{
+    margin:0;
+    font-size:15px;
+    font-weight:700;
+}
+
+.fca-ai-head small{
+    display:block;
+    opacity:.85;
+    font-size:11px;
+}
+
+.fca-ai-head button{
+    background:none;
+    border:none;
+    color:#fff;
+    cursor:pointer;
+    font-size:18px;
+    padding:6px;
+    border-radius:8px;
+    transition:.2s;
+}
+
+.fca-ai-head button:hover{
+    background:rgba(255,255,255,.15);
+}
+
+/* Messages */
+
+.fca-ai-body{
+    flex:1;
+    overflow-y:auto;
+    padding:14px;
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+
+    background:var(--light);
+}
+
+.fca-ai-msg{
+    max-width:85%;
+    padding:10px 14px;
+    border-radius:14px;
+    font-size:14px;
+    line-height:1.5;
+    word-break:break-word;
+    white-space:pre-wrap;
+}
+
+.fca-ai-msg.user{
+    align-self:flex-end;
+    background:var(--primary);
+    color:#fff;
+    border-bottom-right-radius:5px;
+}
+
+.fca-ai-msg.bot{
+    align-self:flex-start;
+    background:#fff;
+    color:var(--text);
+
+    border:1px solid var(--border);
+    border-bottom-left-radius:5px;
+
+    box-shadow:var(--shadow-sm);
+}
+
+.fca-ai-msg .src{
+    display:block;
+    margin-top:5px;
+    font-size:10px;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:.05em;
+}
+
+/* Suggestions */
+
+.fca-ai-suggestions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+
+    padding:10px 12px;
+
+    background:var(--surface);
+    border-top:1px solid var(--border);
+}
+
+.fca-ai-suggestions button{
+    padding:5px 12px;
+    border-radius:999px;
+
+    border:1px solid var(--primary-soft);
+
+    background:var(--primary-soft);
+    color:var(--primary-dark);
+
+    cursor:pointer;
+    font-size:12px;
+    font-weight:600;
+
+    transition:.2s;
+}
+
+.fca-ai-suggestions button:hover{
+    background:var(--primary);
+    color:#fff;
+}
+
+/* Input */
+
+.fca-ai-form{
+    display:flex;
+    gap:8px;
+
+    padding:12px;
+
+    background:var(--surface);
+    border-top:1px solid var(--border);
+}
+
+.fca-ai-form input{
+    flex:1;
+
+    padding:10px 14px;
+
+    border:1px solid var(--border);
+    border-radius:10px;
+
+    font-size:14px;
+
+    background:#fff;
+    color:var(--text);
+
+    outline:none;
+
+    transition:.2s;
+}
+
+.fca-ai-form input:focus{
+    border-color:var(--primary);
+    box-shadow:0 0 0 3px rgba(15,81,50,.15);
+}
+
+.fca-ai-form button{
+    border:none;
+    border-radius:10px;
+
+    padding:0 18px;
+
+    cursor:pointer;
+
+    font-weight:600;
+
+    background:var(--primary);
+    color:#fff;
+
+    transition:.2s;
+}
+
+.fca-ai-form button:hover{
+    background:var(--primary-dark);
+}
+
+.fca-ai-form button:disabled{
+    opacity:.5;
+    cursor:not-allowed;
+}
+
+/* Typing Indicator */
+
+.fca-ai-typing{
+    align-self:flex-start;
+    font-size:13px;
+    color:var(--muted);
+    font-style:italic;
+    padding:4px 8px;
+}
+
+/* Scrollbar */
+
+.fca-ai-body::-webkit-scrollbar{
+    width:8px;
+}
+
+.fca-ai-body::-webkit-scrollbar-thumb{
+    background:var(--primary-soft);
+    border-radius:8px;
+}
+
+.fca-ai-body::-webkit-scrollbar-thumb:hover{
+    background:var(--accent);
+}
+
+/* Mobile */
+
+@media (max-width:768px){
+
+    .fca-ai-panel{
+        right:12px;
+        left:12px;
+        width:auto;
+        bottom:80px;
+        height:75vh;
+    }
+
+    .fca-ai-fab{
+        right:16px;
+        bottom:16px;
+    }
+}
+
+/* Dark Mode */
+
 @media (prefers-color-scheme: dark){
-  .fca-ai-panel{background:#111827;color:#e5e7eb}
-  .fca-ai-body{background:#0b1220}
-  .fca-ai-msg.bot{background:#1f2937;border-color:#374151;color:#e5e7eb}
-  .fca-ai-form,.fca-ai-suggestions{background:#111827;border-color:#1f2937}
-  .fca-ai-form input{background:#0b1220;color:#e5e7eb;border-color:#374151}
-  .fca-ai-suggestions button{background:#1e1b4b;color:#c7d2fe;border-color:#312e81}
+
+    .fca-ai-panel{
+        background:#122018;
+        color:#eaf5ee;
+        border-color:#284332;
+    }
+
+    .fca-ai-body{
+        background:#0f1b14;
+    }
+
+    .fca-ai-msg.bot{
+        background:#183025;
+        border-color:#284332;
+        color:#eaf5ee;
+    }
+
+    .fca-ai-form,
+    .fca-ai-suggestions{
+        background:#122018;
+        border-color:#284332;
+    }
+
+    .fca-ai-form input{
+        background:#0f1b14;
+        border-color:#355544;
+        color:#fff;
+    }
+
+    .fca-ai-suggestions button{
+        background:#214532;
+        border-color:#2d6448;
+        color:#d9f4e4;
+    }
+
+    .fca-ai-suggestions button:hover{
+        background:var(--accent);
+        color:#fff;
+    }
 }
