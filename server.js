@@ -36,6 +36,7 @@ app.use("/kit-sessions", require("./src/routes/kit_session.routes"));
 app.use("/kit-scan", require("./src/routes/kit_scan.routes"));
 app.use("/kit-dashboard", require("./src/routes/kit_dashboard.routes"));
 app.use("/webhook/whatsapp", require("./src/routes/whatsapp.routes"));
+app.use("/api/ai", require("./src/routes/ai.routes"));
 
 // ── Page routes ───────────────────────────────────────────────────────────────
 app.get("/", (req, res) => {

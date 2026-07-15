@@ -1,47 +1,40 @@
 /**
- * memory.service.js
- * In-memory conversation history per phone number.
- * Keeps last 6 exchanges so the bot understands "them", "those", "same ones" etc.
- * Resets after 30 minutes of inactivity.
+ * memory.service.js — extended, backward-compatible.
+ * Adds role-aware keys for the in-app assistant while keeping the
+ * original getHistory/addExchange/clearHistory/buildContext API.
+ *
+ * Keys can be:
+ *   • WhatsApp phone (e.g. "256700123456")
+ *   • "u:<userId>"   (in-app assistant)
  */
+const store = new Map();
+const TTL_MS = 30 * 60 * 1000;
+const MAX_TURNS = 8;
 
-const store = new Map(); // phone -> { history: [], lastAt: Date }
-const TTL_MS = 30 * 60 * 1000; // 30 minutes
+function _fresh(entry) { return entry && (Date.now() - entry.lastAt <= TTL_MS); }
 
-function getHistory(phone) {
-  const entry = store.get(phone);
-  if (!entry) return [];
-  // Expire stale sessions
-  if (Date.now() - entry.lastAt > TTL_MS) {
-    store.delete(phone);
-    return [];
-  }
+function getHistory(key) {
+  const entry = store.get(key);
+  if (!_fresh(entry)) { store.delete(key); return []; }
   return entry.history;
 }
-
-function addExchange(phone, question, answer) {
-  const history = getHistory(phone);
-  history.push({ q: question, a: answer });
-  // Keep only last 6 exchanges to stay within token limits
-  if (history.length > 6) history.shift();
-  store.set(phone, { history, lastAt: Date.now() });
+function addExchange(key, question, answer, meta = {}) {
+  const history = getHistory(key);
+  history.push({ q: question, a: answer, at: Date.now(), ...meta });
+  while (history.length > MAX_TURNS) history.shift();
+  store.set(key, { history, lastAt: Date.now() });
 }
-
-function clearHistory(phone) {
-  store.delete(phone);
-}
-
-/**
- * Build a context string to prepend to Gemini prompts
- * so it knows what was discussed before.
- */
-function buildContext(phone) {
-  const history = getHistory(phone);
+function clearHistory(key) { store.delete(key); }
+function buildContext(key) {
+  const history = getHistory(key);
   if (!history.length) return "";
   const lines = history
     .map((h, i) => `Turn ${i + 1}:\nUser: ${h.q}\nBot: ${h.a}`)
     .join("\n\n");
   return `\n\nPREVIOUS CONVERSATION (for context only):\n${lines}\n\n`;
 }
+function stats() {
+  return { conversations: store.size };
+}
 
-module.exports = { getHistory, addExchange, clearHistory, buildContext };
+module.exports = { getHistory, addExchange, clearHistory, buildContext, stats };
